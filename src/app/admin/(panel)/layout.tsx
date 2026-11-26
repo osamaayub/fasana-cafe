@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
-import { logout } from "../actions";
+import { prisma } from "@lib/prisma";
+import { requireAdmin } from "@lib/auth";
+import { logout } from "@actions/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +27,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="flex shrink-0 items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-mist/85 hover:bg-white/10 hover:text-mist">
+            <Link key={n.href} href={n.href} className="flex shrink-0 items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-mist/85 hover:bg-sheet/10 hover:text-mist">
               {n.label}
-              {!!n.badge && <span className="rounded-full bg-lamp px-2 text-xs font-semibold text-ink">{n.badge}</span>}
+              {!!n.badge && <span className="rounded-full bg-lamp px-2 text-xs font-semibold text-night">{n.badge}</span>}
             </Link>
           ))}
         </nav>

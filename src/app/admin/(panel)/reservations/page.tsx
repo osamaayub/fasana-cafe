@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { StatusPill } from "@/components/status-pill";
-import { deleteReservation, setReservationStatus } from "../../actions";
+import { prisma } from "@lib/prisma";
+import { StatusPill } from "@ui/status-pill";
+import { deleteReservation, setReservationStatus } from "@actions/admin";
 
 const tabs = ["all", "pending", "confirmed", "cancelled"] as const;
 
@@ -18,7 +18,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
       <h1 className="text-4xl text-ink">Reservations</h1>
       <div className="mt-5 flex flex-wrap gap-2">
         {tabs.map((t) => (
-          <Link key={t} href={t === "all" ? "/admin/reservations" : `/admin/reservations?status=${t}`} className={`rounded-full px-4 py-1.5 text-sm capitalize ${status === t ? "bg-ink text-mist" : "bg-white ring-1 ring-line"}`}>{t}</Link>
+          <Link key={t} href={t === "all" ? "/admin/reservations" : `/admin/reservations?status=${t}`} className={`rounded-full px-4 py-1.5 text-sm capitalize ${status === t ? "bg-ink text-mist" : "bg-sheet ring-1 ring-line"}`}>{t}</Link>
         ))}
       </div>
       <div className="mt-5 space-y-3">

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/format";
-import { deleteCategory, saveCategory, toggleItem } from "../../actions";
+import { prisma } from "@lib/prisma";
+import { formatPrice } from "@lib/format";
+import { deleteCategory, saveCategory, toggleItem } from "@actions/admin";
 
 export default async function AdminMenu({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const { saved } = await searchParams;

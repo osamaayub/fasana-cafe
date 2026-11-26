@@ -4,11 +4,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { checkCredentials, requireAdmin } from "@/lib/auth";
-import { SESSION_COOKIE, cookieOptions, createToken } from "@/lib/session";
-import { rateLimit } from "@/lib/rate-limit";
-import { slugify } from "@/lib/format";
+import { prisma } from "@lib/prisma";
+import { checkCredentials, requireAdmin } from "@lib/auth";
+import { SESSION_COOKIE, cookieOptions, createToken } from "@lib/session";
+import { rateLimit } from "@lib/rate-limit";
+import { slugify } from "@lib/format";
 
 const refreshSite = () => revalidatePath("/", "layout");
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();

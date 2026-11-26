@@ -1,10 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import type { OpeningHour, Settings } from "@/lib/types";
-import { DAYS } from "@/lib/format";
-import { saveSettings } from "../../actions";
-import { Submit } from "@/components/form-bits";
+import type { OpeningHour, Settings } from "@lib/types";
+import { DAYS } from "@lib/format";
+import { saveSettings } from "@actions/admin";
+import { Submit } from "@ui/form-bits";
 
 type F = { name: keyof Settings; label: string; type?: string; area?: boolean; full?: boolean; hint?: string };
 const fields: F[] = [

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { StatusPill } from "@/components/status-pill";
+import { prisma } from "@lib/prisma";
+import { StatusPill } from "@ui/status-pill";
 
 export default async function Dashboard() {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());

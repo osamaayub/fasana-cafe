@@ -13,7 +13,7 @@ export function PhotoStrip({ images }: { images: string[] }) {
             aria-hidden={i >= images.length}
             className={`relative h-56 shrink-0 overflow-hidden rounded-3xl bg-tint sm:h-72 ${i % 3 === 1 ? "w-56 sm:w-72" : "w-72 sm:w-[26rem]"}`}
           >
-            <Image src={src} alt="" fill sizes="420px" className="object-cover transition-transform duration-700 hover:scale-105" />
+            <Image src={src} alt="" quality={90} fill sizes="420px" className="object-cover transition-transform duration-700 hover:scale-105" />
           </div>
         ))}
       </div>

@@ -3,16 +3,16 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "node:crypto";
-import { prisma } from "@/lib/prisma";
-import { rateLimit } from "@/lib/rate-limit";
-import { notifyTo } from "@/lib/notify";
-import { siteUrl } from "@/lib/site";
-import { burnTime, hashPassword, verifyPassword } from "@/lib/password";
+import { prisma } from "@lib/prisma";
+import { rateLimit } from "@lib/rate-limit";
+import { notifyTo } from "@lib/notify";
+import { siteUrl } from "@lib/site";
+import { burnTime, hashPassword, verifyPassword } from "@lib/password";
 import {
   endOtherSessions, endSession, getCurrentUser, hashToken, requireUser, safeNext, startSession, updateHint,
-} from "@/lib/user-session";
-import { changePasswordSchema, email as emailSchema, profileSchema, resetSchema, signInSchema, signUpSchema } from "@/lib/account-validation";
-import { fieldErrors, type FormState } from "@/lib/validation";
+} from "@lib/user-session";
+import { changePasswordSchema, email as emailSchema, profileSchema, resetSchema, signInSchema, signUpSchema } from "@lib/account-validation";
+import { fieldErrors, type FormState } from "@lib/validation";
 
 const MAX_FAILS = 5;
 const LOCK_MS = 15 * 60 * 1000;
@@ -31,9 +31,8 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   if (await prisma.user.findUnique({ where: { email } })) {
     return { ok: false, values, errors: { email: "This email already has an account. Sign in, or reset your password." } };
   }
-  const user = await prisma.user.create({ data: { name, email, passwordHash: await hashPassword(password) } });
-  await startSession(user.id, firstName(name));
-  redirect("/account/setup");
+  await prisma.user.create({ data: { name, email, passwordHash: await hashPassword(password) } });
+  redirect("/signin?notice=account-created");
 }
 
 /* ---------- sign in ---------- */
@@ -63,12 +62,12 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   }
   await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null } });
   await startSession(user.id, firstName(user.name));
-  redirect(user.profileComplete ? safeNext(String(fd.get("next") ?? "")) : "/account/setup");
+  redirect(safeNext(String(fd.get("next") ?? ""), user.profileComplete ? "/account" : "/reserve"));
 }
 
 export async function signOut() {
   await endSession();
-  redirect("/");
+  redirect("/signin?notice=signed-out");
 }
 
 /* ---------- password reset ---------- */
@@ -122,7 +121,7 @@ export async function saveProfile(_: FormState, fd: FormData): Promise<FormState
 }
 
 export async function changePassword(_: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ allowIncomplete: true });
   const parsed = changePasswordSchema.safeParse({ current: fd.get("current"), password: fd.get("password"), confirm: fd.get("confirm") });
   if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) };
   if (!(await rateLimit("change-pw", 5, 15 * 60 * 1000))) return { ok: false, message: "Too many attempts. Wait 15 minutes." };
@@ -134,13 +133,13 @@ export async function changePassword(_: FormState, fd: FormData): Promise<FormSt
 }
 
 export async function revokeSession(fd: FormData) {
-  const user = await requireUser();
+  const user = await requireUser({ allowIncomplete: true });
   await prisma.session.deleteMany({ where: { id: String(fd.get("id")), userId: user.id, NOT: { id: user.sessionId } } });
   revalidatePath("/account");
 }
 
 export async function signOutEverywhere() {
-  const user = await requireUser();
+  const user = await requireUser({ allowIncomplete: true });
   await prisma.session.deleteMany({ where: { userId: user.id } });
   await endSession();
   redirect("/signin?notice=signed-out-everywhere");
@@ -148,7 +147,7 @@ export async function signOutEverywhere() {
 
 /* ---------- bookings ---------- */
 export async function cancelMyReservation(fd: FormData) {
-  const user = await requireUser();
+  const user = await requireUser({ allowIncomplete: true });
   // only the owner can cancel, and only upcoming bookings
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
   await prisma.reservation.updateMany({

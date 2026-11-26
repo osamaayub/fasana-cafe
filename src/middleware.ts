@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifyToken } from "@/lib/session";
+import { SESSION_COOKIE, verifyToken } from "@lib/session";
 
 const USER_COOKIE = "fasana_session";
 

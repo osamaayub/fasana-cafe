@@ -1,4 +1,4 @@
-import type { OpeningHour, Settings } from "@/lib/types";
+import type { OpeningHour, Settings } from "@lib/types";
 
 const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 

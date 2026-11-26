@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { OpeningHour } from "@/lib/types";
-import { isOpenNow, lahoreNow, to12h } from "@/lib/format";
+import type { OpeningHour } from "@lib/types";
+import { isOpenNow, lahoreNow, to12h } from "@lib/format";
 
 /** Live status, computed in the browser so cached pages stay accurate. */
 export function OpenBadge({ hours }: { hours: OpeningHour[] }) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { AuthShell } from "@/components/auth-shell";
-import { ProfileForm } from "@/components/account-forms";
-import { requireUser } from "@/lib/user-session";
+import { AuthShell } from "@ui/auth-shell";
+import { ProfileForm } from "@ui/account-forms";
+import { requireUser } from "@lib/user-session";
 
 export const metadata: Metadata = { title: "Set up your profile", robots: { index: false } };
 export const dynamic = "force-dynamic";

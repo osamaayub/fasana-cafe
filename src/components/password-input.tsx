@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "./icons";
 
 function score(p: string) {
   let s = 0;
@@ -23,12 +24,15 @@ export function PasswordInput({
   return (
     <div>
       <div className="relative">
-        <input
-          id={id} name={name} type={show ? "text" : "password"} autoComplete={autoComplete} required
-          value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder}
-          className="input pr-20" aria-invalid={invalid || undefined} aria-describedby={describedBy}
-          spellCheck={false} autoCapitalize="none"
-        />
+        <Lock className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
+        <span className="block [&_.input]:pl-11">
+          <input
+            id={id} name={name} type={show ? "text" : "password"} autoComplete={autoComplete} required
+            value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder ?? "Your password"}
+            className="input pr-20" aria-invalid={invalid || undefined} aria-describedby={describedBy}
+            spellCheck={false} autoCapitalize="none"
+          />
+        </span>
         <button type="button" onClick={() => setShow((v) => !v)} aria-pressed={show} aria-controls={id}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted hover:bg-mist hover:text-ink">
           {show ? "Hide" : "Show"}

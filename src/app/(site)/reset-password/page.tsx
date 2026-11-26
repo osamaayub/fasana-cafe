@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AuthShell } from "@/components/auth-shell";
-import { ResetForm } from "@/components/auth-forms";
+import { AuthShell } from "@ui/auth-shell";
+import { ResetForm } from "@ui/auth-forms";
 
 export const metadata: Metadata = { title: "Set a new password", robots: { index: false }, referrer: "no-referrer" };
 

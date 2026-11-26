@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import type { Category, MenuItem } from "@/lib/types";
-import { saveItem } from "../../../actions";
-import { Submit } from "@/components/form-bits";
+import type { Category, MenuItem } from "@lib/types";
+import { saveItem } from "@actions/admin";
+import { Submit } from "@ui/form-bits";
 
 export function ItemForm({ item, categories }: { item?: MenuItem; categories: Category[] }) {
   const [state, action] = useActionState(saveItem, {});

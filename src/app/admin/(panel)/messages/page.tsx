@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { deleteMessage, toggleMessageRead } from "../../actions";
+import { prisma } from "@lib/prisma";
+import { deleteMessage, toggleMessageRead } from "@actions/admin";
 
 export default async function MessagesPage() {
   const rows = await prisma.message.findMany({ orderBy: [{ read: "asc" }, { createdAt: "desc" }], take: 200 });

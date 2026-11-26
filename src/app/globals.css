@@ -2,6 +2,7 @@
 
 @theme {
   --color-night: #0e1628;
+  --color-frost: #dbe4f2;
   --color-ink: #16213b;
   --color-ink-2: #22304f;
   --color-lamp: #f0b44c;
@@ -15,54 +16,108 @@
   --color-mist: #e7ebe2;
   --color-muted: #586174;
   --color-line: #dde2d8;
+  --color-danger: #b42318;
+  --color-success: #15803d;
   --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
   --font-urdu: var(--font-nastaliq), "Noto Nastaliq Urdu", serif;
   --ease-out-soft: cubic-bezier(.2, .7, .2, 1);
 }
 
+/* Dark theme: same tokens, deepened palette. Utilities resolve through these vars. */
+.dark {
+  --color-paper: #0d1526;
+  --color-sheet: #17203a;
+  --color-tint: #111a30;
+  --color-mist: #1d2a47;
+  --color-muted: #8d9ab5;
+  --color-line: #2a3a5c;
+  --color-glow: #33270f;
+  --color-ink: #e9edf6;
+  --color-ink-2: #2b3a5f;
+  --color-ember: #e0a94e;
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  color-scheme: dark;
+}
+
 @layer base {
   html { scroll-behavior: smooth; }
-  body { @apply bg-paper text-ink font-sans antialiased; font-feature-settings: "ss01"; }
-  h1, h2, h3 { @apply font-serif font-normal; letter-spacing: -0.01em; }
-  ::selection { background: var(--color-lamp); color: var(--color-ink); }
-  :focus-visible { outline: 2px solid var(--color-lamp-2); outline-offset: 3px; }
+  body { @apply bg-paper text-ink font-sans antialiased; font-feature-settings: "ss01"; transition: background-color .35s ease, color .35s ease; }
+  h1, h2, h3 { @apply font-serif font-normal; letter-spacing: -0.01em; text-wrap: balance; }
+  p { text-wrap: pretty; }
+  ::selection { background: var(--color-lamp); color: var(--color-night); }
+  :focus-visible { outline: 2px solid var(--color-lamp-2); outline-offset: 3px; border-radius: 4px; }
 }
 
 @utility container-x {
   @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
 }
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors duration-200 disabled:opacity-60;
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-[background-color,border-color,color,transform,box-shadow] duration-200 select-none active:translate-y-px disabled:opacity-60 disabled:active:translate-y-0;
 }
 @utility btn-primary {
-  @apply btn bg-lamp text-ink hover:bg-lamp-2;
+  @apply btn bg-lamp text-night shadow-[0_10px_24px_-14px_rgba(227,157,38,.9)] hover:-translate-y-0.5 hover:bg-lamp-2 hover:shadow-[0_16px_30px_-14px_rgba(227,157,38,.9)];
 }
 @utility btn-dark {
-  @apply btn bg-ink text-mist hover:bg-ink-2;
+  @apply btn bg-ink text-mist hover:-translate-y-0.5 hover:bg-ink-2 hover:shadow-[0_14px_28px_-16px_rgba(22,33,59,.7)];
 }
 @utility btn-ghost {
-  @apply btn border border-line bg-sheet text-ink hover:border-ink/30;
+  @apply btn border border-line bg-sheet text-ink hover:-translate-y-0.5 hover:border-ink/30 hover:shadow-[0_10px_22px_-18px_rgba(22,33,59,.5)];
 }
 @utility btn-outline-light {
   @apply btn border border-mist/30 text-mist hover:border-mist/70;
 }
 @utility input {
-  @apply w-full rounded-xl border border-line bg-paper px-4 py-3 text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:border-ink focus:outline-none focus:ring-4 focus:ring-lamp/25;
+  @apply w-full rounded-2xl border border-line bg-sheet px-4 py-3 text-[15px] text-ink shadow-[inset_0_1px_2px_rgba(22,33,59,.04)] placeholder:text-muted/60 transition-[border-color,box-shadow,background-color] focus:border-ink/60 focus:outline-none focus:ring-4 focus:ring-lamp/25 disabled:cursor-not-allowed disabled:opacity-60;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-medium text-ink;
 }
 @utility field-error {
-  @apply mt-1.5 text-xs font-medium text-red-700;
+  @apply mt-1.5 text-xs font-medium text-danger;
 }
 @utility card {
-  @apply rounded-2xl border border-line bg-sheet;
+  @apply rounded-3xl border border-line bg-sheet shadow-[0_1px_2px_rgba(22,33,59,.04),0_16px_40px_-32px_rgba(22,33,59,.35)];
+}
+/* large editorial display heading */
+@utility display {
+  @apply font-serif font-normal leading-[0.98] tracking-[-0.02em] text-balance;
+}
+/* gradient accent text */
+@utility text-glow {
+  @apply bg-gradient-to-br from-lamp via-lamp-2 to-ember bg-clip-text text-transparent;
+}
+/* fine film-grain overlay for dark sections */
+@utility grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+}
+/* small uppercase eyebrow label above headings */
+@utility eyebrow {
+  @apply inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-ember;
+}
+/* decorative rule with a lamp dot, used under section headings */
+@utility heading-rule {
+  @apply relative mt-4 h-px w-16 bg-ink/20;
+}
+/* elegant inline text link */
+@utility link-underline {
+  @apply font-semibold text-ink underline decoration-lamp decoration-2 underline-offset-[6px] transition-colors hover:decoration-ink;
+}
+/* soft grain-free hero backdrop wash */
+@utility glow-wash {
+  @apply pointer-events-none absolute rounded-full bg-glow blur-3xl;
 }
 /* dotted leader between a menu item's name and price, like a book's contents page */
 @utility leader {
   @apply flex-1 translate-y-[-0.3em] border-b-2 border-dotted border-ink/20;
 }
+
+/* deeper shadows so cards still lift off dark surfaces */
+.dark .card { box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 16px 44px -30px rgba(0,0,0,.9); }
+
+@keyframes scrollcue { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(300%); } }
+@keyframes hero-drift { from { transform: scale(1.04); } to { transform: scale(1.14); } }
 
 @keyframes ink-in {
   from { opacity: 0; filter: blur(8px); transform: translateY(12px) scale(.98); }

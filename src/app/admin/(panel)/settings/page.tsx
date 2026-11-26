@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@lib/prisma";
 import { SettingsForm } from "./settings-form";
 
 export default async function SettingsPage() {

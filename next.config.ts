@@ -2,9 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  experimental: { serverActions: { bodySizeLimit: "200kb" } },
+  experimental: {
+    serverActions: { bodySizeLimit: "200kb" },
+    staleTimes: { dynamic: 30, static: 300 },
+  },
   images: {
     formats: ["image/avif", "image/webp"],
+    qualities: [75, 90],
+    minimumCacheTTL: 2678400,
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
   async headers() {

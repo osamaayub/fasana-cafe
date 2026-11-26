@@ -2,6 +2,25 @@
 import { useState } from "react";
 
 import { useFormStatus } from "react-dom";
+import { Alert as AlertIcon, Check } from "./icons";
+
+export function Alert({ msg }: { msg?: string }) {
+  return msg ? (
+    <p role="alert" className="flex items-start gap-2.5 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+      <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{msg}</span>
+    </p>
+  ) : null;
+}
+
+export function Notice({ msg }: { msg?: string }) {
+  return msg ? (
+    <p role="status" className="flex items-start gap-2.5 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+      <Check className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{msg}</span>
+    </p>
+  ) : null;
+}
 
 export function Submit({ children, pendingText = "Sending…", className = "btn-dark w-full py-4 text-base" }: { children: React.ReactNode; pendingText?: string; className?: string }) {
   const { pending } = useFormStatus();
@@ -9,6 +28,16 @@ export function Submit({ children, pendingText = "Sending…", className = "btn-
     <button type="submit" disabled={pending} className={className}>
       {pending ? pendingText : children}
     </button>
+  );
+}
+
+/** Input wrapped with a leading icon. */
+export function IconInput({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <Icon className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
+      <span className="block [&_.input]:pl-11">{children}</span>
+    </div>
   );
 }
 
@@ -37,7 +66,7 @@ export function Honeypot() {
 export function SuccessBox({ title, message, onReset, actionLabel = "Send another" }: { title: string; message?: string; onReset: () => void; actionLabel?: string }) {
   return (
     <div role="status" className="py-10 text-center">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-lamp text-ink">
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-lamp text-night">
         <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m5 12 5 5 9-10" /></svg>
       </span>
       <p className="mt-5 font-serif text-4xl">{title}</p>

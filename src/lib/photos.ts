@@ -3,11 +3,11 @@
  * They are mood shots, not photos of Fasana. Replace them with the café's own photos
  * from Admin > Settings before launch.
  */
-const u = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1800&q=80`;
+const u = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=2400&q=90`;
 
 export const STARTER_PHOTOS = {
   hero: u("photo-1699192253430-e5a5a2a44f21"), // coffee beside a lamp, by nik radzi
-  story: u("photo-1602325611479-2c258843f119"), // stack of books on a café table, by Miriana Dorobanțu
+  story: u("photo-1507842217343-583bb7270b66"), // grand library interior, by Dan DeAlmeida
   reserve: u("photo-1763497397285-a557a7c8d8b7"), // book and coffee on marble, by Esra Afşar
   gallery: [
     u("photo-1768608082926-68f1811cfd1a"), // café interior, by Haberdoedas

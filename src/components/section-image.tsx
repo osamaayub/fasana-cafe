@@ -12,7 +12,7 @@ export function SectionImage({
   return (
     <div className={`group relative overflow-hidden ${src ? "bg-tint" : "bg-ink-2"} ${className}`}>
       {src ? (
-        <Image src={src} alt={alt} fill priority={priority} sizes={sizes} className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]" />
+        <Image src={src} alt={alt} quality={90} fill priority={priority} sizes={sizes} className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]" />
       ) : (
         <Placeholder variant={variant} />
       )}

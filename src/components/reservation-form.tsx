@@ -2,9 +2,10 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { submitReservation } from "@/app/actions";
-import type { FormState } from "@/lib/validation";
-import { Field, Honeypot, Submit, SuccessBox, useLiveErrors } from "./form-bits";
+import { submitReservation } from "@actions/public";
+import type { FormState } from "@lib/validation";
+import { Alert, Field, Honeypot, IconInput, Submit, SuccessBox, useLiveErrors } from "./form-bits";
+import { Calendar, Mail, Phone, User } from "./icons";
 
 const initial: FormState = { ok: false };
 
@@ -76,17 +77,27 @@ function Inner({ onReset }: { onReset: () => void }) {
   if (state.ok) return <SuccessBox title="Request received" message={state.message} onReset={onReset} actionLabel="Make another booking" />;
 
   const chip = (on: boolean) =>
-    `rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${on ? "bg-ink text-mist" : "bg-sheet text-ink ring-1 ring-line hover:ring-ink/40"}`;
+    `rounded-full px-4 py-2.5 text-sm font-medium transition-all ${on ? "bg-ink text-mist shadow-md" : "bg-sheet text-ink ring-1 ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`;
+
+  const step = (n: string, title: string, hint?: string) => (
+    <div className="flex items-baseline gap-3">
+      <span className="flex h-7 w-7 shrink-0 translate-y-0.5 items-center justify-center rounded-full bg-lamp text-xs font-bold text-night">{n}</span>
+      <div>
+        <p className="font-serif text-xl leading-none">{title}</p>
+        {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      </div>
+    </div>
+  );
 
   return (
-    <form action={action} onInput={onInput} className="relative space-y-7" noValidate>
+    <form action={action} onInput={onInput} className="relative space-y-9" noValidate>
       <Honeypot />
-      {state.message && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">{state.message}</p>}
+      <Alert msg={state.message} />
 
       {/* When */}
-      <fieldset>
-        <legend className="label">Day</legend>
-        <div className="flex flex-wrap items-center gap-2">
+      <section>
+        {step("1", "When", "Same-day bookings need about 30 minutes' notice.")}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button type="button" className={chip(date === today)} onClick={() => setDate(today)} aria-pressed={date === today}>Today</button>
           <button type="button" className={chip(date === tomorrow)} onClick={() => setDate(tomorrow)} aria-pressed={date === tomorrow}>Tomorrow</button>
           <label className="relative">
@@ -98,69 +109,100 @@ function Inner({ onReset }: { onReset: () => void }) {
           </label>
         </div>
         {e.date && <p id="date-error" className="field-error" role="alert">{e.date}</p>}
-      </fieldset>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Field label="Time" name="time" error={e.time}>
-          {times.length ? (
-            <select id="time" name="time" value={chosenTime} onChange={(ev) => setTime(ev.target.value)} className="input" {...aria("time")}>
-              {times.map((t) => <option key={t} value={t}>{label12(t)}</option>)}
-            </select>
-          ) : (
-            <p className="rounded-xl bg-mist px-4 py-3 text-sm">We&apos;re closing soon. Pick tomorrow or call us.</p>
-          )}
-        </Field>
-        <div>
-          <span className="label" id="guests-label">Guests</span>
-          <div className="flex items-center gap-2" role="group" aria-labelledby="guests-label">
-            <button type="button" onClick={() => setGuests((g) => Math.max(1, g - 1))} className="h-12 w-12 rounded-full bg-sheet text-xl ring-1 ring-line hover:ring-ink/40" aria-label="Fewer guests">−</button>
-            <input name="guests" type="number" min={1} max={30} value={guests} onChange={(ev) => setGuests(Math.min(30, Math.max(1, Number(ev.target.value) || 1)))} className="input w-20 text-center text-lg font-semibold" aria-label="Number of guests" {...aria("guests")} />
-            <button type="button" onClick={() => setGuests((g) => Math.min(30, g + 1))} className="h-12 w-12 rounded-full bg-sheet text-xl ring-1 ring-line hover:ring-ink/40" aria-label="More guests">+</button>
-          </div>
-          {e.guests && <p id="guests-error" className="field-error" role="alert">{e.guests}</p>}
+        <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-end">
+          <Field label="Guests" name="guests" error={e.guests}>
+            <div className="flex items-center gap-2" role="group" aria-label="Number of guests">
+              <button type="button" onClick={() => setGuests((g) => Math.max(1, g - 1))} className="flex h-11 w-11 items-center justify-center rounded-full bg-sheet text-lg font-semibold ring-1 ring-line transition-all hover:-translate-y-0.5 hover:ring-ink/40" aria-label="Fewer guests">−</button>
+              <span className="w-14 text-center text-xl font-semibold tabular-nums" aria-live="polite">{guests}</span>
+              <button type="button" onClick={() => setGuests((g) => Math.min(30, g + 1))} className="flex h-11 w-11 items-center justify-center rounded-full bg-sheet text-lg font-semibold ring-1 ring-line transition-all hover:-translate-y-0.5 hover:ring-ink/40" aria-label="More guests">+</button>
+              <input id="guests" name="guests" type="number" min={1} max={30} value={guests} onChange={(ev) => setGuests(Math.min(30, Math.max(1, Number(ev.target.value) || 1)))} className="sr-only" tabIndex={-1} aria-hidden />
+            </div>
+          </Field>
+          <Field label="Time" name="time" error={e.time}>
+            {times.length ? (
+              <div className="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto rounded-2xl bg-mist/60 p-2.5" role="group" aria-label="Available times">
+                {times.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTime(t)}
+                    aria-pressed={chosenTime === t}
+                    className={`rounded-lg px-3 py-1.5 text-sm tabular-nums transition-all ${chosenTime === t ? "bg-ink font-semibold text-mist shadow-sm" : "text-ink/80 hover:bg-sheet"}`}
+                  >
+                    {label12(t)}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-xl bg-mist px-4 py-3 text-sm">We&apos;re closing soon. Pick tomorrow or call us.</p>
+            )}
+            <input id="time" type="hidden" name="time" value={chosenTime} />
+          </Field>
         </div>
-      </div>
+      </section>
 
-      <fieldset>
-        <legend className="label">Where would you like to sit?</legend>
-        <div className="grid gap-2 sm:grid-cols-3">
+      {/* Where */}
+      <section>
+        {step("2", "Where", "We'll do our best — requests aren't guarantees.")}
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {[
             { v: "any", t: "Wherever’s free", d: "Fastest to confirm" },
             { v: "indoor", t: "Indoors", d: "Near the bookshelves" },
             { v: "outdoor", t: "Terrace", d: "Air-conditioned outdoor seating" },
           ].map((o) => (
-            <label key={o.v} className={`cursor-pointer rounded-2xl p-4 ring-1 transition-colors ${seating === o.v ? "bg-ink text-mist ring-ink" : "bg-sheet ring-line hover:ring-ink/40"}`}>
+            <label key={o.v} className={`cursor-pointer rounded-2xl p-4 ring-1 transition-all ${seating === o.v ? "bg-ink text-mist ring-ink shadow-md" : "bg-sheet ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`}>
               <input type="radio" name="seating" value={o.v} checked={seating === o.v} onChange={() => setSeating(o.v)} className="sr-only" />
               <span className="block font-semibold">{o.t}</span>
               <span className={`mt-0.5 block text-sm ${seating === o.v ? "text-mist/70" : "text-muted"}`}>{o.d}</span>
             </label>
           ))}
         </div>
-      </fieldset>
+      </section>
 
       {/* Who */}
-      {checked && !me && (
-        <p className="rounded-xl bg-mist px-4 py-3 text-sm">
-          <Link href="/signin?next=/reserve" className="font-semibold underline">Sign in</Link> to fill this in automatically and keep track of your bookings.
-        </p>
-      )}
-      <div className="grid gap-6 border-t border-line pt-7 sm:grid-cols-2" key={me ? "me" : "guest"}>
-        <Field label="Your name" name="name" error={e.name}>
-          <input id="name" name="name" required autoComplete="name" defaultValue={v.name ?? me?.name} className="input" {...aria("name")} />
-        </Field>
-        <Field label="Phone or WhatsApp" name="phone" error={e.phone} hint="We’ll confirm on this number">
-          <input id="phone" name="phone" type="tel" inputMode="tel" required autoComplete="tel" placeholder="03xx xxxxxxx" defaultValue={v.phone ?? me?.phone} className="input" {...aria("phone")} />
-        </Field>
-        <Field label="Email (optional)" name="email" error={e.email}>
-          <input id="email" name="email" type="email" autoComplete="email" defaultValue={v.email ?? me?.email} className="input" {...aria("email")} />
-        </Field>
-        <Field label="Anything we should know? (optional)" name="notes" error={e.notes}>
-          <input id="notes" name="notes" placeholder="Birthday, high chair, allergies" defaultValue={v.notes} className="input" />
-        </Field>
+      <section>
+        {step("3", "Who", "So we can confirm your booking.")}
+        {checked && !me && (
+          <p className="mb-4 mt-4 rounded-xl bg-mist px-4 py-3 text-sm">
+            <Link href="/signin?next=/reserve" className="font-semibold underline">Sign in</Link> to fill this in automatically and keep track of your bookings.
+          </p>
+        )}
+        <div className="mt-4 grid gap-5 border-t border-line pt-6 sm:grid-cols-2" key={me ? "me" : "guest"}>
+          <Field label="Your name" name="name" error={e.name}>
+            <IconInput icon={User}>
+              <input id="name" name="name" required autoComplete="name" defaultValue={v.name ?? me?.name} className="input" {...aria("name")} />
+            </IconInput>
+          </Field>
+          <Field label="Phone or WhatsApp" name="phone" error={e.phone} hint="We’ll confirm on this number">
+            <IconInput icon={Phone}>
+              <input id="phone" name="phone" type="tel" inputMode="tel" required autoComplete="tel" placeholder="03xx xxxxxxx" defaultValue={v.phone ?? me?.phone} className="input" {...aria("phone")} />
+            </IconInput>
+          </Field>
+          <Field label="Email (optional)" name="email" error={e.email}>
+            <IconInput icon={Mail}>
+              <input id="email" name="email" type="email" autoComplete="email" defaultValue={v.email ?? me?.email} className="input" {...aria("email")} />
+            </IconInput>
+          </Field>
+          <Field label="Anything we should know? (optional)" name="notes" error={e.notes}>
+            <input id="notes" name="notes" placeholder="Birthday, high chair, allergies" defaultValue={v.notes} className="input" />
+          </Field>
+        </div>
+      </section>
+
+      {/* Live summary of the request */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-2xl bg-ink px-5 py-4 text-sm text-mist" aria-live="polite">
+        <span className="flex items-center gap-2"><Calendar className="h-4 w-4 text-lamp" />{date === today ? "Today" : date === tomorrow ? "Tomorrow" : new Date(`${date}T12:00:00+05:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Karachi" })}</span>
+        <span className="text-mist/40">·</span>
+        <span>{chosenTime ? label12(chosenTime) : "—"}</span>
+        <span className="text-mist/40">·</span>
+        <span>{guests} {guests === 1 ? "guest" : "guests"}</span>
+        <span className="text-mist/40">·</span>
+        <span className="text-mist/70">{seating === "any" ? "any table" : seating === "outdoor" ? "terrace" : "indoors"}</span>
       </div>
 
-      <div>
-        <Submit pendingText="Sending your request…">Request a table for {guests}</Submit>
+      <div className="border-t border-line pt-6">
+        <Submit pendingText="Sending your request…">Request a table for {guests} {guests === 1 ? "guest" : "guests"}</Submit>
         <p className="mt-3 text-center text-sm text-muted">Your table is confirmed when we call or message you back.</p>
       </div>
     </form>

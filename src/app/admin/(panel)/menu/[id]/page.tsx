@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { deleteItem } from "../../../actions";
+import { prisma } from "@lib/prisma";
+import { deleteItem } from "@actions/admin";
 import { ItemForm } from "./item-form";
 
 export default async function EditItem({ params }: { params: Promise<{ id: string }> }) {

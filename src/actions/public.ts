@@ -1,10 +1,10 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/user-session";
-import { notify } from "@/lib/notify";
-import { rateLimit } from "@/lib/rate-limit";
-import { fieldErrors, messageSchema, reservationSchema, type FormState } from "@/lib/validation";
+import { prisma } from "@lib/prisma";
+import { getCurrentUser } from "@lib/user-session";
+import { notify } from "@lib/notify";
+import { rateLimit } from "@lib/rate-limit";
+import { fieldErrors, messageSchema, reservationSchema, type FormState } from "@lib/validation";
 
 const toObj = (fd: FormData) => Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)]));
 
@@ -40,4 +40,13 @@ export async function submitMessage(_: FormState, fd: FormData): Promise<FormSta
   await prisma.message.create({ data: m });
   await notify(`New message from ${m.name}`, { Name: m.name, Phone: m.phone || "-", Email: m.email || "-", Subject: m.subject || "-", Message: m.body });
   return { ok: true, message: "Thanks for your message. We'll get back to you soon." };
+}
+
+export async function subscribeNewsletter(_: FormState, fd: FormData): Promise<FormState> {
+  if (fd.get("company")) return { ok: true, message: "You're on the list!" }; // honeypot
+  const email = String(fd.get("email") ?? "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, message: "Please enter a valid email address." };
+  if (!(await rateLimit("contact"))) return { ok: false, message: "Too many requests. Please try again later." };
+  await prisma.message.create({ data: { name: "Newsletter subscriber", email, subject: "Newsletter signup", body: "Subscribed from the homepage." } });
+  return { ok: true, message: "You're on the list — see you soon." };
 }

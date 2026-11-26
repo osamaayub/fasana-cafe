@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { login } from "../actions";
-import { Submit } from "@/components/form-bits";
+import { login } from "@actions/admin";
+import { Submit } from "@ui/form-bits";
 
 export function LoginForm({ next }: { next: string }) {
   const [state, action] = useActionState(login, {});

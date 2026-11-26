@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { getSettings } from "@/lib/data";
-import { ContactForm } from "@/components/contact-form";
-import { MapEmbed } from "@/components/map-embed";
-import { PageHeader } from "@/components/page-header";
-import { Chat, Phone, Pin } from "@/components/icons";
+import { getSettings } from "@lib/data";
+import { ContactForm } from "@ui/contact-form";
+import { MapEmbed } from "@ui/map-embed";
+import { PageHeader } from "@ui/page-header";
+import { Chat, Phone, Pin } from "@ui/icons";
 
 export const revalidate = 3600;
 export const metadata: Metadata = { title: "Contact", description: "Call, WhatsApp or message Fasana Café.", alternates: { canonical: "/contact" } };
@@ -18,7 +18,7 @@ export default async function ContactPage() {
   ];
   return (
     <>
-      <PageHeader title="Say hello" intro="Questions, private events, feedback or a book you're looking for. Pick whatever's easiest.">
+      <PageHeader eyebrow="Get in touch" title="Say hello" intro="Questions, private events, feedback or a book you're looking for. Pick whatever's easiest.">
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
           {ways.map((w) => (
             <a key={w.title} href={w.href} {...(w.ext ? { target: "_blank", rel: "noopener" } : {})}
@@ -32,8 +32,16 @@ export default async function ContactPage() {
 
       <div className="container-x grid gap-10 py-16 lg:grid-cols-[1.2fr_1fr] lg:py-20">
         <div>
-          <h2 className="mb-8 text-4xl">Send a message</h2>
-          <ContactForm />
+          <div className="mb-8 flex items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">Message us</p>
+              <h2 className="mt-2 text-4xl">Send a message</h2>
+            </div>
+            <p className="hidden text-sm text-muted sm:block">Takes about a minute</p>
+          </div>
+          <div className="card p-6 sm:p-10">
+            <ContactForm />
+          </div>
         </div>
         <div className="flex flex-col gap-4">
           <MapEmbed query={s.mapEmbedQuery || `${s.latitude},${s.longitude}`} title={`Map showing ${s.name}`} />
