@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Settings {
+  id            Int      @id @default(1)
+  name          String
+  tagline       String
+  heroTitle     String
+  heroSubtitle  String
+  about         String
+  address       String
+  phone         String
+  whatsapp      String
+  email         String   @default("")
+  instagram     String   @default("")
+  facebook      String   @default("")
+  foodpandaUrl  String   @default("")
+  mapsUrl       String   @default("")
+  mapEmbedQuery String   @default("")
+  latitude      Float
+  longitude     Float
+  googleRating  Float    @default(0)
+  googleReviews Int      @default(0)
+  heroImage     String   @default("")
+  storyImage    String   @default("")
+  reserveImage  String   @default("")
+  galleryImages String   @default("") // one image URL per line
+  updatedAt     DateTime @updatedAt
+}
+
+model OpeningHour {
+  id        Int     @id @default(autoincrement())
+  dayOfWeek Int     @unique // 0 = Sunday ... 6 = Saturday
+  opensAt   String // "10:00"
+  closesAt  String // "00:00" = midnight
+  closed    Boolean @default(false)
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String
+  slug      String     @unique
+  sortOrder Int        @default(0)
+  items     MenuItem[]
+}
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @default("")
+  price       Int? // PKR; null = "Ask staff"
+  imageUrl    String   @default("")
+  featured    Boolean  @default(false)
+  available   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+model Highlight {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+  icon        String @default("coffee") // coffee | book | leaf | star
+  sortOrder   Int    @default(0)
+}
+
+model User {
+  id               Int           @id @default(autoincrement())
+  email            String        @unique
+  passwordHash     String
+  name             String        @default("")
+  phone            String        @default("")
+  seatingPref      String        @default("any") // any | indoor | outdoor
+  dietaryNotes     String        @default("")
+  marketingOptIn   Boolean       @default(false)
+  profileComplete  Boolean       @default(false)
+  failedLogins     Int           @default(0)
+  lockedUntil      DateTime?
+  passwordChangedAt DateTime     @default(now())
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  sessions         Session[]
+  reservations     Reservation[]
+  resetTokens      PasswordResetToken[]
+}
+
+/// Only a SHA-256 hash of the session token is stored; the raw token lives in the httpOnly cookie.
+model Session {
+  id         String   @id // sha256(token)
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent  String   @default("")
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id // sha256(token)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Reservation {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name      String
+  phone     String
+  email     String   @default("")
+  date      String // YYYY-MM-DD (Lahore local date)
+  time      String // HH:MM
+  guests    Int
+  seating   String   @default("any") // any | indoor | outdoor
+  notes     String   @default("")
+  status    String   @default("pending") // pending | confirmed | cancelled
+  createdAt DateTime @default(now())
+
+  @@index([status, date])
+  @@index([userId])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String   @default("")
+  email     String   @default("")
+  subject   String   @default("")
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+}
