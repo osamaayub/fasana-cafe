@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { MenuItem } from "@lib/types";
-import { formatPrice } from "@lib/format";
+import { formatPrice, parseOptions } from "@lib/format";
 import { Coffee, Star, X } from "./icons";
 
 /** Modal with the full details of one dish. Rendered only while `item` is set. */
@@ -24,6 +24,7 @@ export function DishDialog({ item, note, orderUrl, onClose }: { item: MenuItem |
   }, [item, onClose]);
 
   if (!item || typeof document === "undefined") return null;
+  const options = parseOptions(item.options);
 
   // Portal to <body>: a card with a transform would otherwise trap this "fixed" overlay inside the card.
   return createPortal(
@@ -65,12 +66,25 @@ export function DishDialog({ item, note, orderUrl, onClose }: { item: MenuItem |
               <h2 className="mt-1 font-serif text-3xl leading-tight sm:text-4xl">{item.name}</h2>
             </div>
             {item.price == null ? (
-              <span className="rounded-full border border-dashed border-line px-4 py-1.5 text-sm font-medium text-muted">Ask staff</span>
+              <span className="whitespace-nowrap rounded-full border border-dashed border-line px-4 py-1.5 text-sm font-medium text-muted">Ask staff</span>
             ) : (
-              <span className="rounded-full bg-lamp px-5 py-2 font-semibold tabular-nums text-night">{formatPrice(item.price)}</span>
+              <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap rounded-full bg-lamp px-5 py-2 font-semibold tabular-nums text-night">
+                {options.length > 1 && <span className="text-xs font-medium uppercase tracking-wide text-night/70">from</span>}
+                {formatPrice(item.price)}
+              </span>
             )}
           </div>
           {item.description && <p className="mt-4 text-[15px] leading-relaxed text-muted">{item.description}</p>}
+          {options.length > 0 && (
+            <ul className="mt-5 divide-y divide-line overflow-hidden rounded-2xl border border-line" aria-label="Sizes and prices">
+              {options.map((o) => (
+                <li key={o.label} className="flex items-center justify-between gap-4 px-4 py-3 text-[15px]">
+                  <span>{o.label}</span>
+                  <span className="whitespace-nowrap font-semibold tabular-nums">{formatPrice(o.price)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">
             {orderUrl && (
               <a href={orderUrl} target="_blank" rel="noopener" className="btn-primary">

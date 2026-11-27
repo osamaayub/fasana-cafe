@@ -30,7 +30,7 @@ export function MenuBrowser({ categories, orderUrl }: { categories: Cat[]; order
   }, [categories, terms]);
 
   const featured = useMemo(
-    () => (terms.length ? [] : categories.flatMap((c) => c.items.filter((i) => i.featured).map((i) => ({ ...i, cat: c.name }))).slice(0, 8)),
+    () => (terms.length ? [] : categories.flatMap((c) => c.items.filter((i) => i.featured).map((i) => ({ ...i, cat: c.name }))).slice(0, 6)),
     [categories, terms]
   );
 
@@ -155,14 +155,9 @@ export function MenuBrowser({ categories, orderUrl }: { categories: Cat[]; order
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ember">Most loved</p>
                 <h2 id="favourites" className="mt-1 text-3xl sm:text-4xl">Favourites</h2>
               </div>
-              <p className="text-xs text-muted sm:hidden">Swipe for more</p>
             </div>
-            <div className="-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
-              {featured.map((item) => (
-                <div key={item.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
-                  <MenuCard item={item} note={item.cat} variant="feature" onSelect={() => setDish({ item, note: item.cat })} />
-                </div>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+              {featured.map((item) => <MenuCard key={item.id} item={item} onSelect={() => setDish({ item, note: item.cat })} />)}
             </div>
           </section>
         )}

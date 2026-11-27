@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { MenuItem } from "@lib/types";
-import { formatPrice } from "@lib/format";
+import { formatPrice, parseOptions } from "@lib/format";
 import { Coffee, Star } from "./icons";
 
 /** Wraps the parts of `text` that match any search term in <mark>. Matching ignores case and accents. */
@@ -25,17 +25,22 @@ function Highlight({ text, terms }: { text: string; terms?: string[] }) {
   return <>{out}</>;
 }
 
-function Price({ price, small }: { price: number | null | undefined; small?: boolean }) {
+/** Price pill. Never wraps; shows "from" when the dish comes in several sizes or proteins. */
+export function Price({ price, from, small }: { price: number | null | undefined; from?: boolean; small?: boolean }) {
   return price == null ? (
-    <span className="shrink-0 rounded-full border border-dashed border-line px-2.5 py-0.5 text-[11px] font-medium text-muted">Ask staff</span>
+    <span className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-line px-2.5 py-0.5 text-[11px] font-medium text-muted">Ask staff</span>
   ) : (
-    <span className={`shrink-0 rounded-full bg-lamp font-semibold tabular-nums text-night ${small ? "px-2.5 py-0.5 text-sm" : "px-3 py-1"}`}>{formatPrice(price)}</span>
+    <span className={`inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap rounded-full bg-lamp font-semibold tabular-nums text-night ${small ? "px-2.5 py-0.5 text-sm" : "px-3 py-1 text-[15px]"}`}>
+      {from && <span className="text-[11px] font-medium uppercase tracking-wide text-night/70">from</span>}
+      {formatPrice(price)}
+    </span>
   );
 }
 
 /**
  * Menu card. On phones it's a compact row (thumbnail, name, price) so the whole menu is quick to scan;
  * from the small breakpoint up it becomes a photo card. `variant="feature"` keeps the photo card everywhere.
+ * The name stays on one line on photo cards (the full name is in the tooltip and the details pop-up).
  */
 export function MenuCard({
   item,
@@ -51,11 +56,19 @@ export function MenuCard({
   variant?: "list" | "feature";
 }) {
   const row = variant === "list";
+  const opts = parseOptions(item.options);
+  const priceLine = (small?: boolean) => (
+    <div className="flex min-w-0 items-center gap-2">
+      <Price price={item.price} from={opts.length > 1} small={small} />
+      {opts.length > 1 && <span className="truncate text-xs text-muted">{opts.map((o) => o.label).join(" · ")}</span>}
+    </div>
+  );
+
   return (
     <article
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
-      aria-label={onSelect ? `${item.name}, ${item.price == null ? "ask staff for price" : formatPrice(item.price)}. View details` : undefined}
+      aria-label={onSelect ? `${item.name}, ${item.price == null ? "ask staff for price" : `${opts.length > 1 ? "from " : ""}${formatPrice(item.price)}`}. View details` : undefined}
       onClick={onSelect}
       onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } } : undefined}
       className={`card group flex h-full overflow-hidden transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(22,33,59,.4)] ${row ? "flex-row sm:flex-col" : "flex-col"} ${onSelect ? "cursor-pointer" : ""}`}
@@ -75,25 +88,20 @@ export function MenuCard({
         )}
       </div>
       <div className={`flex min-w-0 flex-1 flex-col ${row ? "py-3 pr-4 sm:p-5" : "p-5"}`}>
-        <div className={`flex justify-between gap-3 ${row ? "flex-col items-start sm:flex-row" : "items-start"}`}>
-          <h3 className={`font-serif leading-snug ${row ? "text-lg sm:text-[1.3rem]" : "text-[1.3rem]"}`}>
-            {row && item.featured && <Star aria-label="Favourite" className="mr-1 inline h-3.5 w-3.5 -translate-y-0.5 fill-current text-ember sm:hidden" />}
-            <Highlight text={item.name} terms={highlight} />
-          </h3>
-          {row ? (
-            <>
-              <span className="hidden sm:mt-1 sm:block"><Price price={item.price} /></span>
-            </>
-          ) : (
-            <span className="mt-1"><Price price={item.price} /></span>
-          )}
-        </div>
+        <h3
+          title={item.name}
+          className={`font-serif leading-snug ${row ? "line-clamp-2 text-lg sm:line-clamp-none sm:truncate sm:text-[1.3rem]" : "truncate text-[1.3rem]"}`}
+        >
+          {row && item.featured && <Star aria-label="Favourite" className="mr-1 inline h-3.5 w-3.5 -translate-y-0.5 fill-current text-ember sm:hidden" />}
+          <Highlight text={item.name} terms={highlight} />
+        </h3>
+        <div className={row ? "mt-2 hidden sm:block" : "mt-2"}>{priceLine()}</div>
         {item.description && (
-          <p className={`mt-1.5 text-sm leading-relaxed text-muted ${row ? "line-clamp-2 sm:mt-2 sm:line-clamp-3" : "mt-2 line-clamp-3"}`}>
+          <p className={`text-sm leading-relaxed text-muted ${row ? "mt-1.5 line-clamp-2 sm:mt-3 sm:line-clamp-3" : "mt-3 line-clamp-3"}`}>
             <Highlight text={item.description} terms={highlight} />
           </p>
         )}
-        {row && <span className="mt-auto pt-2 sm:hidden"><Price price={item.price} small /></span>}
+        {row && <div className="mt-auto pt-2 sm:hidden">{priceLine(true)}</div>}
         {note && <p className="mt-auto pt-3 text-xs font-semibold uppercase tracking-wider text-ember">{note}</p>}
       </div>
     </article>

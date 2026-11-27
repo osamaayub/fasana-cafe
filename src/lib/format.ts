@@ -55,3 +55,15 @@ export function slugify(s: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+export type PriceOption = { label: string; price: number };
+
+/** Parses "Chicken 2030 | Beef 2475" into labelled prices. Parts without a trailing number are skipped. */
+export function parseOptions(raw: string | null | undefined): PriceOption[] {
+  if (!raw) return [];
+  return raw
+    .split("|")
+    .map((part) => part.trim().match(/^(.*?)\s*(\d[\d,]*)$/))
+    .filter((m): m is RegExpMatchArray => !!m && !!m[1])
+    .map((m) => ({ label: m[1].trim(), price: Number(m[2].replace(/,/g, "")) }));
+}
