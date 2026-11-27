@@ -63,7 +63,7 @@ export function MenuPreview({ categories, orderUrl }: { categories: Cat[]; order
       </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {visible.map(({ item, note }) => (
-          <MenuCard key={item.id} item={item} note={note} onSelect={() => setDish({ item, note })} />
+          <MenuCard key={item.id} item={item} note={note} variant="feature" onSelect={() => setDish({ item, note })} />
         ))}
       </div>
       <div className="mt-8 flex flex-wrap items-center gap-3">

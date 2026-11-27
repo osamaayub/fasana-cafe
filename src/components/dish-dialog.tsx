@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { MenuItem } from "@lib/types";
 import { formatPrice } from "@lib/format";
@@ -22,9 +23,10 @@ export function DishDialog({ item, note, orderUrl, onClose }: { item: MenuItem |
     };
   }, [item, onClose]);
 
-  if (!item) return null;
+  if (!item || typeof document === "undefined") return null;
 
-  return (
+  // Portal to <body>: a card with a transform would otherwise trap this "fixed" overlay inside the card.
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-end justify-center bg-night/60 p-0 backdrop-blur-sm sm:items-center sm:p-6"
       role="dialog"
@@ -56,7 +58,7 @@ export function DishDialog({ item, note, orderUrl, onClose }: { item: MenuItem |
             </span>
           )}
         </div>
-        <div className="overflow-y-auto p-6 sm:p-8">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               {note && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ember">{note}</p>}
@@ -81,6 +83,7 @@ export function DishDialog({ item, note, orderUrl, onClose }: { item: MenuItem |
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

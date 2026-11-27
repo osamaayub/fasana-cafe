@@ -1,26 +1,29 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { submitReservation } from "@actions/public";
 import type { FormState } from "@lib/validation";
 import { Alert, Field, Honeypot, IconInput, Submit, SuccessBox, useLiveErrors } from "./form-bits";
-import { Calendar, Mail, Phone, User } from "./icons";
+import { Book, Calendar, Check, Mail, Phone, Star, Sun, User } from "./icons";
 
 const initial: FormState = { ok: false };
+const TZ = "Asia/Karachi";
+const DAYS_SHOWN = 14;
 
 const lahoreDate = (offsetDays = 0) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date(Date.now() + offsetDays * 864e5));
+  new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(Date.now() + offsetDays * 864e5));
 
 const lahoreMinutes = () => {
-  const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
+  const p = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
   const [h, m] = p.split(":").map(Number);
   return h * 60 + m;
 };
 
+const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+
 /** 30-minute slots from opening until the last seating. */
 function slots(open = "10:00", lastSeating = "23:30") {
-  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
   const out: string[] = [];
   for (let m = toMin(open); m <= toMin(lastSeating); m += 30) out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
   return out;
@@ -31,9 +34,43 @@ const label12 = (t: string) => {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "pm" : "am"}`;
 };
 
+const asDate = (d: string) => new Date(`${d}T12:00:00+05:00`);
+const fmt = (d: string, o: Intl.DateTimeFormatOptions) => asDate(d).toLocaleDateString("en-GB", { ...o, timeZone: TZ });
+
+const periods = [
+  { name: "Daytime", from: 0, to: 17 * 60 },
+  { name: "Evening", from: 17 * 60, to: 21 * 60 },
+  { name: "Late", from: 21 * 60, to: 24 * 60 },
+];
+
+const seatingOptions = [
+  { v: "any", t: "Wherever’s free", d: "Fastest to confirm", icon: Star },
+  { v: "indoor", t: "Indoors", d: "Near the bookshelves", icon: Book },
+  { v: "outdoor", t: "Terrace", d: "Air-conditioned outdoor seating", icon: Sun },
+];
+
 export function ReservationForm() {
   const [key, setKey] = useState(0);
   return <Inner key={key} onReset={() => setKey((k) => k + 1)} />;
+}
+
+function Step({ n, title, hint, children }: { n: string; title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="min-w-0">
+      <legend className="flex w-full items-start gap-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lamp text-xs font-bold text-night">{n}</span>
+        <span className="min-w-0">
+          <span className="block font-serif text-2xl leading-7">{title}</span>
+          {hint && <span className="mt-1 block text-sm text-muted">{hint}</span>}
+        </span>
+      </legend>
+      <div className="mt-5 space-y-6">{children}</div>
+    </fieldset>
+  );
+}
+
+function SubLabel({ children, id }: { children: React.ReactNode; id?: string }) {
+  return <p id={id} className="mb-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted">{children}</p>;
 }
 
 function Inner({ onReset }: { onReset: () => void }) {
@@ -43,18 +80,22 @@ function Inner({ onReset }: { onReset: () => void }) {
   const aria = (n: string) => (e[n] ? { "aria-invalid": true as const, "aria-describedby": `${n}-error` } : {});
 
   const today = lahoreDate(0);
-  const tomorrow = lahoreDate(1);
+  const days = useMemo(() => Array.from({ length: DAYS_SHOWN }, (_, i) => lahoreDate(i)), []);
   const [date, setDate] = useState(v.date ?? today);
   const [guests, setGuests] = useState(Number(v.guests ?? 2));
+  const [bigGroup, setBigGroup] = useState(Number(v.guests ?? 2) > 6);
   const [seating, setSeating] = useState(v.seating ?? "any");
+  const pickerRef = useRef<HTMLInputElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
 
   const times = useMemo(() => {
     const all = slots();
     if (date !== today) return all;
     const now = lahoreMinutes() + 30; // at least 30 minutes' notice
-    return all.filter((t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3)) >= now);
+    return all.filter((t) => toMin(t) >= now);
   }, [date, today]);
   const [time, setTime] = useState(v.time ?? "");
+  const chosenTime = times.includes(time) ? time : times.find((t) => t >= "19:30") ?? times[0] ?? "";
 
   // Signed-in guests: prefill from their profile (the page itself is cached, so fetch on the client)
   const [me, setMe] = useState<{ name: string; phone: string; email: string; seatingPref: string } | null>(null);
@@ -72,103 +113,212 @@ function Inner({ onReset }: { onReset: () => void }) {
       .finally(() => setChecked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const chosenTime = times.includes(time) ? time : times.find((t) => t >= "19:30") ?? times[0] ?? "";
 
   if (state.ok) return <SuccessBox title="Request received" message={state.message} onReset={onReset} actionLabel="Make another booking" />;
 
-  const chip = (on: boolean) =>
-    `rounded-full px-4 py-2.5 text-sm font-medium transition-all ${on ? "bg-ink text-mist shadow-md" : "bg-sheet text-ink ring-1 ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`;
+  const offStrip = !days.includes(date);
+  const dayName = (d: string, i: number) => (i === 0 ? "Today" : i === 1 ? "Tmrw" : fmt(d, { weekday: "short" }));
+  const whenLabel = date === today ? "Today" : date === days[1] ? "Tomorrow" : fmt(date, { weekday: "short", day: "numeric", month: "short" });
 
-  const step = (n: string, title: string, hint?: string) => (
-    <div className="flex items-baseline gap-3">
-      <span className="flex h-7 w-7 shrink-0 translate-y-0.5 items-center justify-center rounded-full bg-lamp text-xs font-bold text-night">{n}</span>
-      <div>
-        <p className="font-serif text-xl leading-none">{title}</p>
-        {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      </div>
-    </div>
-  );
+  const pill = (on: boolean) =>
+    `transition-[background-color,box-shadow,transform,color] ${on ? "bg-ink text-mist shadow-[0_8px_18px_-10px_rgba(22,33,59,.7)]" : "bg-sheet text-ink ring-1 ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`;
+
+  const openPicker = () => {
+    const el = pickerRef.current;
+    if (!el) return;
+    try {
+      el.showPicker();
+    } catch {
+      el.focus();
+      el.click();
+    }
+  };
 
   return (
-    <form action={action} onInput={onInput} className="relative space-y-9" noValidate>
+    <form action={action} onInput={onInput} className="relative space-y-10" noValidate>
       <Honeypot />
       <Alert msg={state.message} />
 
-      {/* When */}
-      <section>
-        {step("1", "When", "Same-day bookings need about 30 minutes' notice.")}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button type="button" className={chip(date === today)} onClick={() => setDate(today)} aria-pressed={date === today}>Today</button>
-          <button type="button" className={chip(date === tomorrow)} onClick={() => setDate(tomorrow)} aria-pressed={date === tomorrow}>Tomorrow</button>
-          <label className="relative">
-            <span className="sr-only">Pick another date</span>
-            <input
-              type="date" name="date" min={today} value={date} onChange={(ev) => setDate(ev.target.value)}
-              className={`input w-auto rounded-full py-2 ${date !== today && date !== tomorrow ? "border-ink" : ""}`} {...aria("date")}
-            />
-          </label>
-        </div>
-        {e.date && <p id="date-error" className="field-error" role="alert">{e.date}</p>}
-
-        <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-end">
-          <Field label="Guests" name="guests" error={e.guests}>
-            <div className="flex items-center gap-2" role="group" aria-label="Number of guests">
-              <button type="button" onClick={() => setGuests((g) => Math.max(1, g - 1))} className="flex h-11 w-11 items-center justify-center rounded-full bg-sheet text-lg font-semibold ring-1 ring-line transition-all hover:-translate-y-0.5 hover:ring-ink/40" aria-label="Fewer guests">−</button>
-              <span className="w-14 text-center text-xl font-semibold tabular-nums" aria-live="polite">{guests}</span>
-              <button type="button" onClick={() => setGuests((g) => Math.min(30, g + 1))} className="flex h-11 w-11 items-center justify-center rounded-full bg-sheet text-lg font-semibold ring-1 ring-line transition-all hover:-translate-y-0.5 hover:ring-ink/40" aria-label="More guests">+</button>
-              <input id="guests" name="guests" type="number" min={1} max={30} value={guests} onChange={(ev) => setGuests(Math.min(30, Math.max(1, Number(ev.target.value) || 1)))} className="sr-only" tabIndex={-1} aria-hidden />
-            </div>
-          </Field>
-          <Field label="Time" name="time" error={e.time}>
-            {times.length ? (
-              <div className="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto rounded-2xl bg-mist/60 p-2.5" role="group" aria-label="Available times">
-                {times.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTime(t)}
-                    aria-pressed={chosenTime === t}
-                    className={`rounded-lg px-3 py-1.5 text-sm tabular-nums transition-all ${chosenTime === t ? "bg-ink font-semibold text-mist shadow-sm" : "text-ink/80 hover:bg-sheet"}`}
-                  >
-                    {label12(t)}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-xl bg-mist px-4 py-3 text-sm">We&apos;re closing soon. Pick tomorrow or call us.</p>
+      {/* 1. When */}
+      <Step n="1" title="When" hint="Same-day bookings need about 30 minutes' notice.">
+        <div>
+          <div className="flex items-end justify-between gap-3">
+            <SubLabel id="date-label">Date</SubLabel>
+            <p className="mb-2.5 text-sm font-medium text-ink">{fmt(date, { weekday: "long", day: "numeric", month: "long" })}</p>
+          </div>
+          <div
+            ref={stripRef}
+            role="radiogroup"
+            aria-labelledby="date-label"
+            className="-mx-5 flex snap-x scroll-px-5 gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:thin] sm:-mx-10 sm:scroll-px-10 sm:px-10"
+          >
+            {days.map((d, i) => {
+              const on = d === date;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  aria-label={fmt(d, { weekday: "long", day: "numeric", month: "long" })}
+                  onClick={() => setDate(d)}
+                  className={`flex w-[4.25rem] shrink-0 snap-start flex-col items-center rounded-2xl py-2.5 ${pill(on)}`}
+                >
+                  <span className={`text-[11px] font-semibold uppercase tracking-wide ${on ? "text-lamp" : "text-muted"}`}>{dayName(d, i)}</span>
+                  <span className="mt-0.5 text-xl font-semibold tabular-nums leading-tight">{fmt(d, { day: "numeric" })}</span>
+                  <span className={`text-[11px] ${on ? "text-mist/70" : "text-muted"}`}>{fmt(d, { month: "short" })}</span>
+                </button>
+              );
+            })}
+            {offStrip && (
+              <button type="button" role="radio" aria-checked onClick={openPicker} className={`flex w-[4.25rem] shrink-0 snap-start flex-col items-center rounded-2xl py-2.5 ${pill(true)}`}>
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-lamp">{fmt(date, { weekday: "short" })}</span>
+                <span className="mt-0.5 text-xl font-semibold tabular-nums leading-tight">{fmt(date, { day: "numeric" })}</span>
+                <span className="text-[11px] text-mist/70">{fmt(date, { month: "short" })}</span>
+              </button>
             )}
-            <input id="time" type="hidden" name="time" value={chosenTime} />
-          </Field>
-        </div>
-      </section>
-
-      {/* Where */}
-      <section>
-        {step("2", "Where", "We'll do our best — requests aren't guarantees.")}
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          {[
-            { v: "any", t: "Wherever’s free", d: "Fastest to confirm" },
-            { v: "indoor", t: "Indoors", d: "Near the bookshelves" },
-            { v: "outdoor", t: "Terrace", d: "Air-conditioned outdoor seating" },
-          ].map((o) => (
-            <label key={o.v} className={`cursor-pointer rounded-2xl p-4 ring-1 transition-all ${seating === o.v ? "bg-ink text-mist ring-ink shadow-md" : "bg-sheet ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`}>
-              <input type="radio" name="seating" value={o.v} checked={seating === o.v} onChange={() => setSeating(o.v)} className="sr-only" />
-              <span className="block font-semibold">{o.t}</span>
-              <span className={`mt-0.5 block text-sm ${seating === o.v ? "text-mist/70" : "text-muted"}`}>{o.d}</span>
+            <label className="relative flex w-[4.25rem] shrink-0 cursor-pointer snap-start flex-col items-center justify-center rounded-2xl border border-dashed border-line py-2.5 text-muted transition-colors hover:border-ink/40 hover:text-ink focus-within:border-ink">
+              <Calendar className="h-5 w-5" />
+              <span className="mt-1 text-[11px] font-semibold">Later</span>
+              <input
+                ref={pickerRef}
+                type="date"
+                min={today}
+                value={date}
+                onChange={(ev) => ev.target.value && setDate(ev.target.value)}
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  openPicker();
+                }}
+                aria-label="Pick a later date"
+                className="absolute inset-0 cursor-pointer opacity-0"
+              />
             </label>
-          ))}
+          </div>
+          <input type="hidden" name="date" value={date} {...aria("date")} />
+          {e.date && <p id="date-error" className="field-error" role="alert">{e.date}</p>}
         </div>
-      </section>
 
-      {/* Who */}
-      <section>
-        {step("3", "Who", "So we can confirm your booking.")}
+        <div>
+          <SubLabel id="guests-label">Guests</SubLabel>
+          <div role="radiogroup" aria-labelledby="guests-label" className="grid grid-cols-7 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+            {[1, 2, 3, 4, 5, 6].map((n) => {
+              const on = !bigGroup && guests === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  aria-label={`${n} ${n === 1 ? "guest" : "guests"}`}
+                  onClick={() => {
+                    setBigGroup(false);
+                    setGuests(n);
+                  }}
+                  className={`h-11 rounded-full text-[15px] sm:w-11 font-semibold tabular-nums ${pill(on)}`}
+                >
+                  {n}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={bigGroup}
+              onClick={() => {
+                setBigGroup(true);
+                if (guests < 7) setGuests(8);
+              }}
+              className={`h-11 rounded-full text-[15px] font-semibold sm:px-4 ${pill(bigGroup)}`}
+            >
+              7+
+            </button>
+          </div>
+          {bigGroup && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl bg-mist/60 px-3 py-2.5">
+              <div className="flex items-center gap-1" role="group" aria-label="Group size">
+                <button type="button" onClick={() => setGuests((g) => Math.max(7, g - 1))} className="flex h-10 w-10 items-center justify-center rounded-full bg-sheet text-lg font-semibold ring-1 ring-line hover:ring-ink/40" aria-label="Fewer guests">−</button>
+                <span className="w-12 text-center text-lg font-semibold tabular-nums" aria-live="polite">{guests}</span>
+                <button type="button" onClick={() => setGuests((g) => Math.min(30, g + 1))} className="flex h-10 w-10 items-center justify-center rounded-full bg-sheet text-lg font-semibold ring-1 ring-line hover:ring-ink/40" aria-label="More guests">+</button>
+              </div>
+              <p className="text-sm text-muted">Up to 30 online. Bigger group? Call us.</p>
+            </div>
+          )}
+          <input type="hidden" name="guests" value={guests} />
+          {e.guests && <p id="guests-error" className="field-error" role="alert">{e.guests}</p>}
+        </div>
+
+        <div>
+          <SubLabel id="time-label">Time</SubLabel>
+          {times.length ? (
+            <div role="radiogroup" aria-labelledby="time-label" className="space-y-4">
+              {periods.map((p) => {
+                const list = times.filter((t) => toMin(t) >= p.from && toMin(t) < p.to);
+                if (!list.length) return null;
+                return (
+                  <div key={p.name}>
+                    <p className="mb-2 text-sm text-muted">{p.name}</p>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+                      {list.map((t) => {
+                        const on = chosenTime === t;
+                        return (
+                          <button key={t} type="button" role="radio" aria-checked={on} onClick={() => setTime(t)} className={`rounded-xl py-2.5 text-sm font-medium tabular-nums ${pill(on)}`}>
+                            {label12(t)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="rounded-xl bg-mist px-4 py-3 text-sm">We&apos;re closing soon. Pick another day or call us.</p>
+          )}
+          <input type="hidden" name="time" value={chosenTime} />
+          {e.time && <p id="time-error" className="field-error" role="alert">{e.time}</p>}
+        </div>
+      </Step>
+
+      {/* 2. Where */}
+      <Step n="2" title="Where" hint="We'll do our best, but seating requests aren't guaranteed.">
+        <div role="radiogroup" aria-label="Seating" className="grid gap-2.5 sm:grid-cols-3">
+          {seatingOptions.map(({ v: val, t, d, icon: Icon }) => {
+            const on = seating === val;
+            return (
+              <label
+                key={val}
+                className={`relative flex cursor-pointer items-center gap-3 rounded-2xl p-4 transition-[box-shadow,background-color,transform] sm:flex-col sm:items-start sm:gap-3 ${on ? "bg-glow/70 ring-2 ring-ink" : "bg-sheet ring-1 ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`}
+              >
+                <input type="radio" name="seating" value={val} checked={on} onChange={() => setSeating(val)} className="peer sr-only" />
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${on ? "bg-ink text-lamp" : "bg-mist text-ember"}`}>
+                  <Icon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{t}</span>
+                  <span className="mt-0.5 block text-sm text-muted">{d}</span>
+                </span>
+                <span aria-hidden className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full ${on ? "bg-ink text-mist" : "ring-1 ring-line"}`}>
+                  {on && <Check className="h-3 w-3" />}
+                </span>
+                <span aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-lamp-2" />
+              </label>
+            );
+          })}
+        </div>
+      </Step>
+
+      {/* 3. Who */}
+      <Step n="3" title="Your details" hint="So we can confirm your booking.">
         {checked && !me && (
-          <p className="mb-4 mt-4 rounded-xl bg-mist px-4 py-3 text-sm">
-            <Link href="/signin?next=/reserve" className="font-semibold underline">Sign in</Link> to fill this in automatically and keep track of your bookings.
+          <p className="flex items-center gap-3 rounded-xl bg-mist/70 px-4 py-3 text-sm">
+            <User className="h-4 w-4 shrink-0 text-ember" />
+            <span>
+              <Link href="/signin?next=/reserve" className="font-semibold underline underline-offset-2">Sign in</Link> to fill this in for you and keep track of your bookings.
+            </span>
           </p>
         )}
-        <div className="mt-4 grid gap-5 border-t border-line pt-6 sm:grid-cols-2" key={me ? "me" : "guest"}>
+        <div className="grid gap-5 sm:grid-cols-2" key={me ? "me" : "guest"}>
           <Field label="Your name" name="name" error={e.name}>
             <IconInput icon={User}>
               <input id="name" name="name" required autoComplete="name" defaultValue={v.name ?? me?.name} className="input" {...aria("name")} />
@@ -179,32 +329,44 @@ function Inner({ onReset }: { onReset: () => void }) {
               <input id="phone" name="phone" type="tel" inputMode="tel" required autoComplete="tel" placeholder="03xx xxxxxxx" defaultValue={v.phone ?? me?.phone} className="input" {...aria("phone")} />
             </IconInput>
           </Field>
-          <Field label="Email (optional)" name="email" error={e.email}>
-            <IconInput icon={Mail}>
-              <input id="email" name="email" type="email" autoComplete="email" defaultValue={v.email ?? me?.email} className="input" {...aria("email")} />
-            </IconInput>
-          </Field>
-          <Field label="Anything we should know? (optional)" name="notes" error={e.notes}>
-            <input id="notes" name="notes" placeholder="Birthday, high chair, allergies" defaultValue={v.notes} className="input" />
-          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Email (optional)" name="email" error={e.email}>
+              <IconInput icon={Mail}>
+                <input id="email" name="email" type="email" autoComplete="email" defaultValue={v.email ?? me?.email} className="input" {...aria("email")} />
+              </IconInput>
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Anything we should know? (optional)" name="notes" error={e.notes}>
+              <textarea id="notes" name="notes" rows={3} maxLength={500} placeholder="A birthday, a high chair, allergies…" defaultValue={v.notes} className="input min-h-24 resize-y py-3" />
+            </Field>
+          </div>
         </div>
-      </section>
+      </Step>
 
-      {/* Live summary of the request */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-2xl bg-ink px-5 py-4 text-sm text-mist" aria-live="polite">
-        <span className="flex items-center gap-2"><Calendar className="h-4 w-4 text-lamp" />{date === today ? "Today" : date === tomorrow ? "Tomorrow" : new Date(`${date}T12:00:00+05:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Karachi" })}</span>
-        <span className="text-mist/40">·</span>
-        <span>{chosenTime ? label12(chosenTime) : "—"}</span>
-        <span className="text-mist/40">·</span>
-        <span>{guests} {guests === 1 ? "guest" : "guests"}</span>
-        <span className="text-mist/40">·</span>
-        <span className="text-mist/70">{seating === "any" ? "any table" : seating === "outdoor" ? "terrace" : "indoors"}</span>
+      {/* Summary and submit */}
+      <div className="rounded-2xl bg-ink p-5 text-mist sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lamp">Your request</p>
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4" aria-live="polite">
+          {[
+            ["Date", whenLabel],
+            ["Time", chosenTime ? label12(chosenTime) : "Pick a time"],
+            ["Guests", `${guests} ${guests === 1 ? "guest" : "guests"}`],
+            ["Seating", seating === "any" ? "Any table" : seating === "outdoor" ? "Terrace" : "Indoors"],
+          ].map(([k, val]) => (
+            <div key={k}>
+              <dt className="text-xs text-mist/60">{k}</dt>
+              <dd className="mt-0.5 font-semibold">{val}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-5">
+          <Submit pendingText="Sending your request…" className="btn-primary w-full py-4 text-base">
+            Request this table
+          </Submit>
+        </div>
       </div>
-
-      <div className="border-t border-line pt-6">
-        <Submit pendingText="Sending your request…">Request a table for {guests} {guests === 1 ? "guest" : "guests"}</Submit>
-        <p className="mt-3 text-center text-sm text-muted">Your table is confirmed when we call or message you back.</p>
-      </div>
+      <p className="-mt-6 text-center text-sm text-muted">Your table is confirmed when we call or message you back.</p>
     </form>
   );
 }
