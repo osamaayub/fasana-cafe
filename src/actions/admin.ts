@@ -34,6 +34,7 @@ const itemSchema = z.object({
   description: z.string().max(500),
   price: z.union([z.literal("").transform(() => null), z.coerce.number().int().min(0).max(1_000_000)]),
   imageUrl: z.union([z.literal(""), z.string().url()]),
+  options: z.string().max(300).default(""),
   categoryId: z.coerce.number().int().positive(),
   sortOrder: z.coerce.number().int().default(0),
 });
@@ -42,7 +43,7 @@ export async function saveItem(_: { error?: string }, fd: FormData): Promise<{ e
   await requireAdmin();
   const parsed = itemSchema.safeParse({
     name: str(fd, "name"), description: str(fd, "description"), price: str(fd, "price"),
-    imageUrl: str(fd, "imageUrl"), categoryId: str(fd, "categoryId"), sortOrder: str(fd, "sortOrder") || "0",
+    imageUrl: str(fd, "imageUrl"), options: str(fd, "options"), categoryId: str(fd, "categoryId"), sortOrder: str(fd, "sortOrder") || "0",
   });
   if (!parsed.success) return { error: parsed.error.issues.map((i) => `${String(i.path[0])}: ${i.message}`).join(", ") };
   const data = { ...parsed.data, featured: fd.get("featured") === "on", available: fd.get("available") === "on" };
