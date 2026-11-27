@@ -34,8 +34,9 @@ export function Submit({ children, pendingText = "Sending…", className = "btn-
 /** Input wrapped with a leading icon. */
 export function IconInput({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
-    <div className="relative">
-      <Icon className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
+    <div className="group relative">
+      {/* Centred for one-line inputs; pinned beside the first line for a textarea */}
+      <Icon className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted group-has-[textarea]:top-4 group-has-[textarea]:translate-y-0" />
       <span className="block [&_.input]:pl-11">{children}</span>
     </div>
   );
