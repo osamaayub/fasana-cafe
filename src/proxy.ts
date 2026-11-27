@@ -3,7 +3,7 @@ import { SESSION_COOKIE, verifyToken } from "@lib/session";
 
 const USER_COOKIE = "fasana_session";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Customer area: quick cookie check here; the page itself validates the session in the database.
