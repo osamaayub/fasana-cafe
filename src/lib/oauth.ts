@@ -27,7 +27,7 @@ type Provider = {
   profile: (accessToken: string) => Promise<OAuthProfile>;
 };
 
-const FB_GRAPH = "https://graph.facebook.com/v21.0";
+const FB_GRAPH = "https://graph.facebook.com/v25.0";
 
 const providers: Record<ProviderId, Provider> = {
   google: {
@@ -49,7 +49,7 @@ const providers: Record<ProviderId, Provider> = {
     label: "Facebook",
     clientId: process.env.FACEBOOK_CLIENT_ID,
     clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-    authorizeUrl: "https://www.facebook.com/v21.0/dialog/oauth",
+    authorizeUrl: "https://www.facebook.com/v25.0/dialog/oauth",
     tokenUrl: `${FB_GRAPH}/oauth/access_token`,
     scope: "email,public_profile",
     pkce: false,
