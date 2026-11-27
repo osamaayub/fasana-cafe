@@ -9,6 +9,7 @@ import { NewsletterForm } from "@ui/newsletter-form";
 import { ContactForm } from "@ui/contact-form";
 import { ReservationForm } from "@ui/reservation-form";
 import { MapEmbed } from "@ui/map-embed";
+import { directionsLink, mapsLink } from "@lib/maps";
 import { SectionImage } from "@ui/section-image";
 import { PhotoStrip } from "@ui/photo-strip";
 import { Reveal } from "@ui/reveal";
@@ -73,7 +74,7 @@ export default async function HomePage() {
             <div className="anim-rise mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted">
               <span className="flex items-center gap-1.5"><Pin className="h-4 w-4 text-ember" />{s.address}</span>
               {s.googleRating > 0 && (
-                <a href={s.mapsUrl} target="_blank" rel="noopener" className="flex items-center gap-1.5 transition-colors hover:text-ink">
+                <a href={mapsLink(s)} target="_blank" rel="noopener" className="flex items-center gap-1.5 transition-colors hover:text-ink">
                   <Star className="h-4 w-4 fill-lamp text-lamp-2" />
                   <span className="font-semibold text-ink">{s.googleRating.toFixed(1)}</span> on Google
                 </a>
@@ -238,7 +239,7 @@ export default async function HomePage() {
             <p className="mt-5 max-w-sm text-mist/70">{s.address}</p>
             <div className="mt-8"><HoursList hours={hours} dark /></div>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href={s.mapsUrl} target="_blank" rel="noopener" className="btn-primary">Get directions</a>
+              <a href={directionsLink(s)} target="_blank" rel="noopener" className="btn-primary">Get directions</a>
               <a href={`tel:${tel}`} className="btn-outline-light"><Phone className="h-4 w-4" />Call {s.phone}</a>
             </div>
           </Reveal>
@@ -285,7 +286,7 @@ export default async function HomePage() {
             <ul className="mt-8 space-y-4 text-sm">
               <li><a href={`tel:${tel}`} className="flex items-center gap-3 font-semibold transition-colors hover:text-ember"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sheet text-ember ring-1 ring-line"><Phone className="h-4.5 w-4.5" /></span>{s.phone}</a></li>
               <li><a href={`https://wa.me/${s.whatsapp}`} target="_blank" rel="noopener" className="flex items-center gap-3 font-semibold transition-colors hover:text-ember"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sheet text-ember ring-1 ring-line"><Chat className="h-4.5 w-4.5" /></span>WhatsApp us</a></li>
-              <li><a href={s.mapsUrl} target="_blank" rel="noopener" className="flex items-center gap-3 font-semibold transition-colors hover:text-ember"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sheet text-ember ring-1 ring-line"><Pin className="h-4.5 w-4.5" /></span>{s.address}</a></li>
+              <li><a href={mapsLink(s)} target="_blank" rel="noopener" className="flex items-center gap-3 font-semibold transition-colors hover:text-ember"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sheet text-ember ring-1 ring-line"><Pin className="h-4.5 w-4.5" /></span>{s.address}</a></li>
             </ul>
             <Link href="/contact" className="link-underline mt-8 inline-block text-sm">Or use the full contact page</Link>
           </Reveal>
