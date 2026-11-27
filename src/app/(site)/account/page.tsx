@@ -211,7 +211,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             ) : (
               <>
                 <h3 className="mb-2 font-sans text-lg font-semibold">Password</h3>
-                <p className="text-sm text-muted">You sign in with Google or Facebook, so this account has no password. Want one as a backup? We&apos;ll email you a link to set it.</p>
+                <p className="text-sm text-muted">You sign in with Google or GitHub, so this account has no password. Want one as a backup? We&apos;ll email you a link to set it.</p>
                 <a href="/forgot-password" className="btn-ghost mt-5 px-5 py-2.5">Set a password</a>
               </>
             )}
