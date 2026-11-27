@@ -153,3 +153,36 @@
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Booking date picker (react-day-picker), themed to the site */
+.fasana-rdp .rdp-root {
+  --rdp-accent-color: var(--color-ink);
+  --rdp-accent-background-color: var(--color-mist);
+  --rdp-today-color: var(--color-ember);
+  --rdp-day-height: 2.75rem;
+  --rdp-day-width: 2.75rem;
+  --rdp-day_button-height: 2.5rem;
+  --rdp-day_button-width: 2.5rem;
+  --rdp-day_button-border-radius: 9999px;
+  --rdp-selected-border: 2px solid var(--color-ink);
+  --rdp-nav_button-height: 2.5rem;
+  --rdp-nav_button-width: 2.5rem;
+  --rdp-disabled-opacity: 0.3;
+  font-family: inherit;
+  color: var(--color-ink);
+  margin: 0 auto;
+}
+.fasana-rdp .rdp-month_caption { font-family: var(--font-serif); font-size: 1.25rem; padding-left: 0.25rem; }
+.fasana-rdp .rdp-weekday { font-size: 0.75rem; font-weight: 600; color: var(--color-muted); opacity: 1; }
+.fasana-rdp .rdp-day_button { font-size: 0.9375rem; font-variant-numeric: tabular-nums; transition: background-color .15s ease; }
+.fasana-rdp .rdp-day:not(.rdp-disabled):not(.rdp-selected) .rdp-day_button:hover { background: var(--color-mist); }
+.fasana-rdp .rdp-selected .rdp-day_button { background: var(--color-ink); color: var(--color-paper); font-weight: 600; font-size: 0.9375rem; }
+.fasana-rdp .rdp-today:not(.rdp-selected) .rdp-day_button { font-weight: 700; }
+.fasana-rdp .rdp-chevron { fill: var(--color-ink); }
+.fasana-pop { animation: fasana-pop .14s ease-out both; }
+@keyframes fasana-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+/* Small phones: let the calendar use the full popover width */
+@media (max-width: 400px) {
+  .fasana-rdp .rdp-root { --rdp-day-width: calc((100vw - 5.5rem) / 7); --rdp-day_button-width: calc((100vw - 6rem) / 7); }
+}
+

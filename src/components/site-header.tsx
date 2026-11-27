@@ -79,24 +79,24 @@ export function SiteHeader({ name, hours = [], phone = "", whatsapp = "" }: { na
         hidden={!open}
         className="fixed inset-x-0 bottom-0 top-20 bg-paper lg:hidden"
       >
-        <div className="container-x flex h-full flex-col pb-8 pt-4">
+        <div className="container-x flex h-full flex-col overflow-y-auto overscroll-contain pb-6 pt-3">
           {hours.length > 0 && <p className="mb-4 flex items-center gap-2 text-sm text-muted"><OpenBadge hours={hours} /></p>}
           {links.map((l, i) => (
             <Link
               key={l.href}
               href={l.href}
-              className="group flex items-baseline gap-4 border-b border-line py-4 transition-colors hover:text-ember"
+              className="group flex items-baseline gap-4 border-b border-line py-3 transition-colors hover:text-ember"
               style={{ animation: `rise .5s var(--ease-out-soft) both`, animationDelay: `${i * 40}ms` }}
             >
               <span className="w-6 text-xs tabular-nums text-muted/60">0{i + 1}</span>
-              <span className="font-serif text-4xl text-ink transition-transform group-hover:translate-x-1">{l.label}</span>
+              <span className="font-serif text-2xl text-ink transition-transform group-hover:translate-x-1">{l.label}</span>
             </Link>
           ))}
-          <Link href={who ? "/account" : "/signin"} className="group flex items-baseline gap-4 border-b border-line py-4">
+          <Link href={who ? "/account" : "/signin"} className="group flex items-baseline gap-4 border-b border-line py-3">
             <span className="w-6 text-xs tabular-nums text-muted/60">0{links.length + 1}</span>
-            <span className="font-serif text-4xl text-ink transition-transform group-hover:translate-x-1">{who ? "My account" : "Sign in"}</span>
+            <span className="font-serif text-2xl text-ink transition-transform group-hover:translate-x-1">{who ? "My account" : "Sign in"}</span>
           </Link>
-          <div className="mt-auto space-y-3 pt-8">
+          <div className="mt-auto space-y-3 pt-6">
             <Link href="/reserve" className="btn-primary flex w-full py-4 text-base">Book a table</Link>
             <div className="flex items-center justify-center gap-5 text-sm text-muted">
               <ThemeToggle />
