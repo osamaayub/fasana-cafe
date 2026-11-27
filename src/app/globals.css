@@ -43,6 +43,11 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
+  /* Grid children default to "min-width: auto", so one wide child (like a scrolling row of chips)
+     can stretch the whole layout past the screen. Let them shrink instead. */
+  .grid > * { min-width: 0; }
+  /* Last line of defence against sideways scrolling on phones. "clip" (not "hidden") keeps sticky headers working. */
+  html, body { overflow-x: clip; }
   body { @apply bg-paper text-ink font-sans antialiased; font-feature-settings: "ss01"; transition: background-color .35s ease, color .35s ease; }
   h1, h2, h3 { @apply font-serif font-normal; letter-spacing: -0.01em; text-wrap: balance; }
   p { text-wrap: pretty; }

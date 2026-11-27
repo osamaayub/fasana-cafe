@@ -37,7 +37,7 @@ export function SiteFooter({ s, hours }: { s: Settings; hours: OpeningHour[] }) 
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-lamp/80">Reservations</p>
             <h2 className="mt-2 font-serif text-3xl text-frost sm:text-4xl">Save a seat by the window?</h2>
-            <p className="mt-2 flex items-center gap-2 text-sm text-frost/60">
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-frost/60">
               {hours.length > 0 && <OpenBadge hours={hours} />}
               <span>Tables go quickly on weekends — booking takes under a minute.</span>
             </p>
