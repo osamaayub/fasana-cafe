@@ -1,15 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { submitReservation } from "@actions/public";
 import type { FormState } from "@lib/validation";
 import { Alert, Field, Honeypot, IconInput, Submit, SuccessBox, useLiveErrors } from "./form-bits";
-import { Book, Calendar, Check, Mail, Phone, Star, Sun, User } from "./icons";
+import { Book, Check, Mail, Phone, Star, Sun, User } from "./icons";
+import { DateField } from "./date-field";
 
 const initial: FormState = { ok: false };
 const TZ = "Asia/Karachi";
-const DAYS_SHOWN = 14;
+const BOOK_AHEAD_DAYS = 90;
 
 const lahoreDate = (offsetDays = 0) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(Date.now() + offsetDays * 864e5));
@@ -80,13 +81,12 @@ function Inner({ onReset }: { onReset: () => void }) {
   const aria = (n: string) => (e[n] ? { "aria-invalid": true as const, "aria-describedby": `${n}-error` } : {});
 
   const today = lahoreDate(0);
-  const days = useMemo(() => Array.from({ length: DAYS_SHOWN }, (_, i) => lahoreDate(i)), []);
+  const tomorrow = lahoreDate(1);
+  const lastDay = lahoreDate(BOOK_AHEAD_DAYS);
   const [date, setDate] = useState(v.date ?? today);
   const [guests, setGuests] = useState(Number(v.guests ?? 2));
   const [bigGroup, setBigGroup] = useState(Number(v.guests ?? 2) > 6);
   const [seating, setSeating] = useState(v.seating ?? "any");
-  const pickerRef = useRef<HTMLInputElement>(null);
-  const stripRef = useRef<HTMLDivElement>(null);
 
   const times = useMemo(() => {
     const all = slots();
@@ -116,23 +116,10 @@ function Inner({ onReset }: { onReset: () => void }) {
 
   if (state.ok) return <SuccessBox title="Request received" message={state.message} onReset={onReset} actionLabel="Make another booking" />;
 
-  const offStrip = !days.includes(date);
-  const dayName = (d: string, i: number) => (i === 0 ? "Today" : i === 1 ? "Tmrw" : fmt(d, { weekday: "short" }));
-  const whenLabel = date === today ? "Today" : date === days[1] ? "Tomorrow" : fmt(date, { weekday: "short", day: "numeric", month: "short" });
+  const whenLabel = date === today ? "Today" : date === tomorrow ? "Tomorrow" : fmt(date, { weekday: "short", day: "numeric", month: "short" });
 
   const pill = (on: boolean) =>
     `transition-[background-color,box-shadow,transform,color] ${on ? "bg-ink text-mist shadow-[0_8px_18px_-10px_rgba(22,33,59,.7)]" : "bg-sheet text-ink ring-1 ring-line hover:-translate-y-0.5 hover:ring-ink/40"}`;
-
-  const openPicker = () => {
-    const el = pickerRef.current;
-    if (!el) return;
-    try {
-      el.showPicker();
-    } catch {
-      el.focus();
-      el.click();
-    }
-  };
 
   return (
     <form action={action} onInput={onInput} className="relative space-y-10" noValidate>
@@ -142,60 +129,23 @@ function Inner({ onReset }: { onReset: () => void }) {
       {/* 1. When */}
       <Step n="1" title="When" hint="Same-day bookings need about 30 minutes' notice.">
         <div>
-          <div className="flex items-end justify-between gap-3">
-            <SubLabel id="date-label">Date</SubLabel>
-            <p className="mb-2.5 text-sm font-medium text-ink">{fmt(date, { weekday: "long", day: "numeric", month: "long" })}</p>
-          </div>
-          <div
-            ref={stripRef}
-            role="radiogroup"
-            aria-labelledby="date-label"
-            className="-mx-5 flex snap-x scroll-px-5 gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:thin] sm:-mx-10 sm:scroll-px-10 sm:px-10"
-          >
-            {days.map((d, i) => {
-              const on = d === date;
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  aria-label={fmt(d, { weekday: "long", day: "numeric", month: "long" })}
-                  onClick={() => setDate(d)}
-                  className={`flex w-[4.25rem] shrink-0 snap-start flex-col items-center rounded-2xl py-2.5 ${pill(on)}`}
-                >
-                  <span className={`text-[11px] font-semibold uppercase tracking-wide ${on ? "text-lamp" : "text-muted"}`}>{dayName(d, i)}</span>
-                  <span className="mt-0.5 text-xl font-semibold tabular-nums leading-tight">{fmt(d, { day: "numeric" })}</span>
-                  <span className={`text-[11px] ${on ? "text-mist/70" : "text-muted"}`}>{fmt(d, { month: "short" })}</span>
+          <SubLabel id="date-label">Date</SubLabel>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex gap-2" role="group" aria-label="Quick dates">
+              {[
+                { d: today, t: "Today" },
+                { d: tomorrow, t: "Tomorrow" },
+              ].map(({ d, t }) => (
+                <button key={t} type="button" onClick={() => setDate(d)} aria-pressed={date === d} className={`h-12 flex-1 rounded-full px-5 text-sm font-semibold sm:flex-none ${pill(date === d)}`}>
+                  {t}
                 </button>
-              );
-            })}
-            {offStrip && (
-              <button type="button" role="radio" aria-checked onClick={openPicker} className={`flex w-[4.25rem] shrink-0 snap-start flex-col items-center rounded-2xl py-2.5 ${pill(true)}`}>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-lamp">{fmt(date, { weekday: "short" })}</span>
-                <span className="mt-0.5 text-xl font-semibold tabular-nums leading-tight">{fmt(date, { day: "numeric" })}</span>
-                <span className="text-[11px] text-mist/70">{fmt(date, { month: "short" })}</span>
-              </button>
-            )}
-            <label className="relative flex w-[4.25rem] shrink-0 cursor-pointer snap-start flex-col items-center justify-center rounded-2xl border border-dashed border-line py-2.5 text-muted transition-colors hover:border-ink/40 hover:text-ink focus-within:border-ink">
-              <Calendar className="h-5 w-5" />
-              <span className="mt-1 text-[11px] font-semibold">Later</span>
-              <input
-                ref={pickerRef}
-                type="date"
-                min={today}
-                value={date}
-                onChange={(ev) => ev.target.value && setDate(ev.target.value)}
-                onClick={(ev) => {
-                  ev.preventDefault();
-                  openPicker();
-                }}
-                aria-label="Pick a later date"
-                className="absolute inset-0 cursor-pointer opacity-0"
-              />
-            </label>
+              ))}
+            </div>
+            <div className="min-w-0 flex-1">
+              <DateField value={date} min={today} max={lastDay} onChange={setDate} label="Date" invalid={!!e.date} describedBy={e.date ? "date-error" : undefined} />
+            </div>
           </div>
-          <input type="hidden" name="date" value={date} {...aria("date")} />
+          <input type="hidden" name="date" value={date} />
           {e.date && <p id="date-error" className="field-error" role="alert">{e.date}</p>}
         </div>
 
