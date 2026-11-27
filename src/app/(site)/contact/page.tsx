@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getSettings } from "@lib/data";
 import { ContactForm } from "@ui/contact-form";
 import { MapEmbed } from "@ui/map-embed";
+import { mapsLink } from "@lib/maps";
 import { PageHeader } from "@ui/page-header";
 import { Chat, Phone, Pin } from "@ui/icons";
 
@@ -14,7 +15,7 @@ export default async function ContactPage() {
   const ways = [
     { href: `tel:${tel}`, icon: Phone, title: "Call us", body: s.phone, ext: false },
     { href: `https://wa.me/${s.whatsapp}`, icon: Chat, title: "WhatsApp", body: "Usually the quickest reply", ext: true },
-    { href: s.mapsUrl, icon: Pin, title: "Visit", body: "Sector C, Bahria Town", ext: true },
+    { href: mapsLink(s), icon: Pin, title: "Visit", body: "Sector C, Bahria Town", ext: true },
   ];
   return (
     <>

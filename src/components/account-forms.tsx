@@ -80,7 +80,7 @@ export function ChangePasswordForm() {
   );
 }
 
-export function DeleteAccountForm({ email }: { email: string }) {
+export function DeleteAccountForm({ email, hasPassword = true }: { email: string; hasPassword?: boolean }) {
   const [state, action] = useActionState(deleteAccount, initial);
   const { e, onInput } = useLiveErrors(state.errors);
   return (
@@ -92,9 +92,11 @@ export function DeleteAccountForm({ email }: { email: string }) {
           <input id="confirmEmail" name="confirmEmail" autoComplete="off" className="input" />
         </IconInput>
       </Field>
-      <Field label="Password" name="password" error={e.password}>
-        <PasswordInput id="delete-password" name="password" autoComplete="current-password" invalid={!!e.password} />
-      </Field>
+      {hasPassword && (
+        <Field label="Password" name="password" error={e.password}>
+          <PasswordInput id="delete-password" name="password" autoComplete="current-password" invalid={!!e.password} />
+        </Field>
+      )}
       <Submit pendingText="Deleting…" className="btn bg-red-700 px-6 py-3 text-white hover:bg-red-800">Delete my account</Submit>
     </form>
   );

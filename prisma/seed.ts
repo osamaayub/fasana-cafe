@@ -30,7 +30,7 @@ async function main() {
       phone: "+92 300 5258219",
       whatsapp: "923005258219",
       foodpandaUrl: "https://www.foodpanda.pk/restaurant/fokv/fasana-cafe-bahria-town",
-      mapsUrl: "https://www.google.com/maps/place/?q=place_id:ChIJoSEWbdL_GDkR0bxe3ADJ6TA",
+      mapsUrl: "https://www.google.com/maps/search/?api=1&query=Fasana%20Caf%C3%A9%2C%20Bahria%20Town%2C%20Lahore&query_place_id=ChIJoSEWbdL_GDkR0bxe3ADJ6TA",
       mapEmbedQuery: "Fasana Café, Sector C, Bahria Town, Lahore",
       latitude: 31.3715053,
       longitude: 74.1853719,

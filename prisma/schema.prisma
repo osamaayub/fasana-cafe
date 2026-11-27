@@ -78,7 +78,7 @@ model Highlight {
 model User {
   id               Int           @id @default(autoincrement())
   email            String        @unique
-  passwordHash     String
+  passwordHash     String        @default("") // empty for accounts created with Google or GitHub
   name             String        @default("")
   phone            String        @default("")
   seatingPref      String        @default("any") // any | indoor | outdoor
@@ -93,6 +93,20 @@ model User {
   sessions         Session[]
   reservations     Reservation[]
   resetTokens      PasswordResetToken[]
+  oauthAccounts    OAuthAccount[]
+}
+
+/// A Google or GitHub login linked to a customer account.
+model OAuthAccount {
+  id             Int      @id @default(autoincrement())
+  provider       String   // google | github
+  providerUserId String
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
 }
 
 /// Only a SHA-256 hash of the session token is stored; the raw token lives in the httpOnly cookie.

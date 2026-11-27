@@ -203,8 +203,18 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
           </div>
           <div className="card p-6 sm:p-8">
-            <h3 className="mb-5 font-sans text-lg font-semibold">Change password</h3>
-            <ChangePasswordForm />
+            {user.passwordHash ? (
+              <>
+                <h3 className="mb-5 font-sans text-lg font-semibold">Change password</h3>
+                <ChangePasswordForm />
+              </>
+            ) : (
+              <>
+                <h3 className="mb-2 font-sans text-lg font-semibold">Password</h3>
+                <p className="text-sm text-muted">You sign in with Google or GitHub, so this account has no password. Want one as a backup? We&apos;ll email you a link to set it.</p>
+                <a href="/forgot-password" className="btn-ghost mt-5 px-5 py-2.5">Set a password</a>
+              </>
+            )}
           </div>
           <div className="card p-6 sm:p-8">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -228,7 +238,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </div>
           <details className="card border-danger/30 p-6 sm:p-8">
             <summary className="cursor-pointer font-semibold text-danger">Delete account</summary>
-            <div className="mt-5"><DeleteAccountForm email={user.email} /></div>
+            <div className="mt-5"><DeleteAccountForm email={user.email} hasPassword={!!user.passwordHash} /></div>
           </details>
         </section>
       </div>

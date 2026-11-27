@@ -23,7 +23,7 @@ const firstName = (n: string) => n.trim().split(/\s+/)[0] ?? "";
 export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   const values = vals(fd, ["name", "email"]);
   if (fd.get("company")) return { ok: false, message: "Something went wrong. Try again." }; // honeypot
-  const parsed = signUpSchema.safeParse({ ...values, password: fd.get("password"), confirm: fd.get("confirm") });
+  const parsed = signUpSchema.safeParse({ ...values, password: fd.get("password") });
   if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error), values };
   if (!(await rateLimit("signup", 5, 60 * 60 * 1000))) return { ok: false, message: "Too many sign-ups from this network. Try again in an hour.", values };
 
@@ -47,7 +47,8 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const generic: FormState = { ok: false, message: "That email and password don't match. Check them, or reset your password.", values };
   const { email, password } = parsed.data;
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
+  // No account, or one created with Google/GitHub that has no password yet.
+  if (!user || !user.passwordHash) {
     await burnTime(password);
     return generic;
   }
@@ -167,7 +168,8 @@ export async function deleteAccount(_: FormState, fd: FormData): Promise<FormSta
   if (String(fd.get("confirmEmail") ?? "").trim().toLowerCase() !== user.email) {
     return { ok: false, errors: { confirmEmail: "Type your email exactly to confirm" } };
   }
-  if (!(await verifyPassword(String(fd.get("password") ?? ""), user.passwordHash))) {
+  // Accounts made with Google/GitHub have no password; the signed-in session plus the typed email confirm it.
+  if (user.passwordHash && !(await verifyPassword(String(fd.get("password") ?? ""), user.passwordHash))) {
     return { ok: false, errors: { password: "That's not your password" } };
   }
   await prisma.user.delete({ where: { id: user.id } }); // sessions cascade; bookings keep their details but lose the link
