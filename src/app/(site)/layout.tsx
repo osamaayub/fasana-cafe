@@ -1,6 +1,7 @@
 import { SiteHeader } from "@ui/site-header";
 import { SiteFooter } from "@ui/site-footer";
 import { WhatsAppFab } from "@ui/whatsapp-fab";
+import { HideOnAuth } from "@ui/hide-on-auth";
 import { getHours, getSettings } from "@lib/data";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +12,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader name={s.name} hours={hours} phone={s.phone} whatsapp={s.whatsapp} />
       <main id="main" className="min-h-[60vh]">{children}</main>
       <SiteFooter s={s} hours={hours} />
-      <WhatsAppFab number={s.whatsapp} name={s.name} />
+      <HideOnAuth>
+        <WhatsAppFab number={s.whatsapp} name={s.name} />
+      </HideOnAuth>
     </>
   );
 }
