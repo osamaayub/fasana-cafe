@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 const sameString = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-/** Step 2: Google or Facebook sends the visitor back here with a one-time code. */
+/** Step 2: Google or GitHub sends the visitor back here with a one-time code. */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
   const jar = await cookies();
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prov
 
   if (!isProvider(provider) || !isEnabled(provider)) return back("provider-off");
   const q = req.nextUrl.searchParams;
-  // The visitor pressed Cancel on the Google/Facebook screen.
+  // The visitor pressed Cancel on the Google/GitHub screen.
   if (q.get("error")) return back("cancelled");
 
   let saved: { provider?: string; state?: string; verifier?: string; next?: string } = {};
