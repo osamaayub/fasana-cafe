@@ -45,7 +45,7 @@ export default async function ReservePage({ searchParams }: { searchParams: Prom
           <SectionImage src={s.reserveImage} alt="" variant="reserve" sizes="400px" className="mt-10 hidden aspect-[4/3] rounded-3xl lg:block" />
           <div className="mt-10 hidden lg:block"><HoursList hours={hours} /></div>
         </div>
-        <div className="rounded-[1.75rem] border border-line bg-sheet p-6 shadow-[0_30px_60px_-36px_rgba(22,33,59,.35)] sm:p-10">
+        <div className="min-w-0 rounded-[1.75rem] border border-line bg-sheet p-5 shadow-[0_30px_60px_-36px_rgba(22,33,59,.35)] sm:p-10">
           {welcome === "1" && (
             <p role="status" className="mb-6 flex items-center gap-2.5 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
               <Check className="h-4 w-4 shrink-0" />
