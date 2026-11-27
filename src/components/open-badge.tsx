@@ -30,7 +30,7 @@ export function OpenBadge({ hours }: { hours: OpeningHour[] }) {
   }, [hours]);
 
   return (
-    <span className="inline-flex min-h-6 items-center gap-2 text-sm font-medium" aria-live="polite">
+    <span className="inline-flex min-h-6 shrink-0 items-center gap-2 whitespace-nowrap text-sm font-medium" aria-live="polite">
       {state && (
         <>
           <span className="relative flex h-2.5 w-2.5">
