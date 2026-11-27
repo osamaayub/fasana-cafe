@@ -19,6 +19,7 @@ export function ItemForm({ item, categories }: { item?: MenuItem; categories: Ca
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
+      <div className="sm:col-span-2"><label className="label" htmlFor="options">Sizes or options (optional)</label><input id="options" name="options" defaultValue={item?.options} placeholder="Chicken 2030 | Beef 2475 | Prawns 2635" className="input" /><p className="mt-1 text-xs text-muted">Each choice with its price, separated by |. When set, the menu shows &ldquo;from&rdquo; the price above, so make that the lowest one.</p></div>
       <div className="sm:col-span-2"><label className="label" htmlFor="imageUrl">Image URL</label><input id="imageUrl" name="imageUrl" type="url" defaultValue={item?.imageUrl} placeholder="https://…" className="input" /><p className="mt-1 text-xs text-muted">Optional. Use the café&apos;s own photos.</p></div>
       <div><label className="label" htmlFor="sortOrder">Display order</label><input id="sortOrder" name="sortOrder" type="number" defaultValue={item?.sortOrder ?? 0} className="input" /></div>
       <div className="flex items-end gap-5 pb-2">
