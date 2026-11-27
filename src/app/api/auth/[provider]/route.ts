@@ -5,7 +5,7 @@ import { rateLimit } from "@lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-/** Step 1: send the visitor to Google or Facebook. */
+/** Step 1: send the visitor to Google or GitHub. */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
   const back = (error: string) => NextResponse.redirect(new URL(`/signin?error=${error}`, req.url));
