@@ -15,8 +15,8 @@ export const newPassword = z
   .refine((p) => !COMMON.has(p.toLowerCase()), "That password is too common. Pick something less guessable");
 
 export const signUpSchema = z
-  .object({ name: z.string().trim().min(2, "Enter your name").max(80), email, password: newPassword, confirm: z.string() })
-  .refine((v) => v.password === v.confirm, { message: "Passwords don't match", path: ["confirm"] })
+  // No confirm field: the form has a Show button instead, which is easier on phones.
+  .object({ name: z.string().trim().min(2, "Enter your name").max(80), email, password: newPassword })
   .refine((v) => !v.password.toLowerCase().includes(v.email.split("@")[0]), { message: "Don't use your email in your password", path: ["password"] });
 
 export const signInSchema = z.object({ email, password: z.string().min(1, "Enter your password").max(128) });
