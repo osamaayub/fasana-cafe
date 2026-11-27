@@ -4,7 +4,7 @@ import { prisma } from "./prisma";
 import { siteUrl } from "./site";
 
 /*
- * "Continue with Google / Facebook" using the standard OAuth 2.0 authorization-code flow.
+ * "Continue with Google / GitHub" using the standard OAuth 2.0 authorization-code flow.
  * No extra library: the flow is two redirects and two fetch calls.
  * A provider is switched on only when both of its env vars are set.
  */
@@ -12,7 +12,7 @@ import { siteUrl } from "./site";
 /** Short-lived cookie that holds the state and PKCE verifier between the two redirects. */
 export const OAUTH_COOKIE = "fasana_oauth";
 
-export type ProviderId = "google" | "facebook";
+export type ProviderId = "google" | "github";
 
 export type OAuthProfile = { providerUserId: string; email: string; emailVerified: boolean; name: string };
 
@@ -26,8 +26,6 @@ type Provider = {
   pkce: boolean;
   profile: (accessToken: string) => Promise<OAuthProfile>;
 };
-
-const FB_GRAPH = "https://graph.facebook.com/v25.0";
 
 const providers: Record<ProviderId, Provider> = {
   google: {
@@ -45,25 +43,29 @@ const providers: Record<ProviderId, Provider> = {
       return { providerUserId: p.sub, email: p.email ?? "", emailVerified: p.email_verified === true, name: p.name ?? "" };
     },
   },
-  facebook: {
-    label: "Facebook",
-    clientId: process.env.FACEBOOK_CLIENT_ID,
-    clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-    authorizeUrl: "https://www.facebook.com/v25.0/dialog/oauth",
-    tokenUrl: `${FB_GRAPH}/oauth/access_token`,
-    scope: "email,public_profile",
-    pkce: false,
+  github: {
+    label: "GitHub",
+    clientId: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    authorizeUrl: "https://github.com/login/oauth/authorize",
+    tokenUrl: "https://github.com/login/oauth/access_token",
+    scope: "read:user user:email",
+    pkce: true,
     async profile(token) {
-      const r = await fetch(`${FB_GRAPH}/me?fields=id,name,email&access_token=${encodeURIComponent(token)}`, { cache: "no-store" });
-      if (!r.ok) throw new Error(`facebook me ${r.status}`);
-      const p = (await r.json()) as { id: string; email?: string; name?: string };
-      // Facebook only returns an email the person has confirmed with Facebook.
-      return { providerUserId: p.id, email: p.email ?? "", emailVerified: !!p.email, name: p.name ?? "" };
+      const h = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "User-Agent": "fasana-cafe", "X-GitHub-Api-Version": "2022-11-28" };
+      const r = await fetch("https://api.github.com/user", { headers: h, cache: "no-store" });
+      if (!r.ok) throw new Error(`github user ${r.status}`);
+      const p = (await r.json()) as { id: number; login: string; name?: string | null };
+      // The profile email is often hidden, so read the account's primary, verified email instead.
+      const er = await fetch("https://api.github.com/user/emails", { headers: h, cache: "no-store" });
+      const emails = er.ok ? ((await er.json()) as { email: string; primary: boolean; verified: boolean }[]) : [];
+      const best = emails.find((e) => e.primary && e.verified) ?? emails.find((e) => e.verified);
+      return { providerUserId: String(p.id), email: best?.email ?? "", emailVerified: !!best, name: p.name || p.login };
     },
   },
 };
 
-export const isProvider = (p: string): p is ProviderId => p === "google" || p === "facebook";
+export const isProvider = (p: string): p is ProviderId => p === "google" || p === "github";
 
 export function enabledProviders(): { id: ProviderId; label: string }[] {
   return (Object.keys(providers) as ProviderId[])
@@ -108,10 +110,11 @@ export async function finishAuth(id: ProviderId, code: string, verifier: string)
     grant_type: "authorization_code",
   });
   if (p.pkce) body.set("code_verifier", verifier);
-  const r = await fetch(p.tokenUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, cache: "no-store" });
+  const r = await fetch(p.tokenUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" }, body, cache: "no-store" });
   if (!r.ok) throw new Error(`${id} token ${r.status}`);
-  const { access_token } = (await r.json()) as { access_token?: string };
-  if (!access_token) throw new Error(`${id} token missing`);
+  // GitHub answers 200 with an "error" field on failure, so check for the token itself.
+  const { access_token, error } = (await r.json()) as { access_token?: string; error?: string };
+  if (!access_token) throw new Error(`${id} token missing${error ? `: ${error}` : ""}`);
   return p.profile(access_token);
 }
 
@@ -122,7 +125,7 @@ export class OAuthError extends Error {
 }
 
 /**
- * Finds or creates the customer for a Google/Facebook profile.
+ * Finds or creates the customer for a Google/GitHub profile.
  * 1. Already linked: that account.
  * 2. Same verified email as an existing account: link it (the provider has proved they own the email).
  * 3. Otherwise: a new account with no password.
