@@ -64,6 +64,21 @@ async function main() {
   }
 
   await seedMenu();
+  await fillMissingPhotos();
+}
+
+/** Gives a stock photo to any built-in dish that still has none. Never replaces a photo set in Admin. */
+async function fillMissingPhotos() {
+  let filled = 0;
+  for (const cat of MENU) {
+    for (const it of cat.items) {
+      const url = DISH_PHOTOS[it.photo ?? it.name];
+      if (!url) continue;
+      const r = await prisma.menuItem.updateMany({ where: { name: it.name, imageUrl: "" }, data: { imageUrl: url } });
+      filled += r.count;
+    }
+  }
+  if (filled) console.log(`Added photos to ${filled} dishes`);
 }
 
 /**
