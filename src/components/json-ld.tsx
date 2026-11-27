@@ -1,4 +1,5 @@
 import type { OpeningHour, Settings } from "@lib/types";
+import { mapsLink } from "@lib/maps";
 
 const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -12,7 +13,7 @@ export function RestaurantJsonLd({ s, hours, url }: { s: Settings; hours: Openin
     telephone: s.phone,
     address: { "@type": "PostalAddress", streetAddress: s.address, addressLocality: "Lahore", addressRegion: "Punjab", addressCountry: "PK" },
     geo: { "@type": "GeoCoordinates", latitude: s.latitude, longitude: s.longitude },
-    hasMap: s.mapsUrl,
+    hasMap: mapsLink(s),
     servesCuisine: ["Continental", "Cafe"],
     acceptsReservations: true,
     menu: `${url}/menu`,
