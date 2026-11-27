@@ -18,7 +18,7 @@ One Next.js app runs the public website, table bookings, customer accounts and a
 - [Project structure](#project-structure)
 - [How it works](#how-it-works)
 - [Security](#security)
-- [Google and Facebook sign-in](#google-and-facebook-sign-in)
+- [Google and GitHub sign-in](#google-and-github-sign-in)
 - [Deployment](#deployment)
 - [Changing the database schema](#changing-the-database-schema)
 - [Content and photo credits](#content-and-photo-credits)
@@ -41,7 +41,7 @@ One Next.js app runs the public website, table bookings, customer accounts and a
 
 ### Customer accounts
 
-- Sign up and sign in with email, Google or Facebook, plus forgot and reset password
+- Sign up and sign in with email, Google or GitHub, plus forgot and reset password
 - Sign-up (email or social) signs the customer in and opens a short profile step: phone or WhatsApp, seating preference, dietary notes and an offers opt-in
 - Account page with upcoming and past bookings, self-service cancel, profile editing and password change
 - List of signed-in devices with sign-out per device or everywhere, plus account deletion
@@ -123,8 +123,8 @@ Put your values in `.env.local` for local work. This file is gitignored. On Verc
 | `RESEND_API_KEY` | No | Turns on email alerts and password-reset emails. Without it, reset emails are not sent. |
 | `NOTIFY_EMAIL_TO` | No | Where staff alerts are sent |
 | `NOTIFY_EMAIL_FROM` | No | Sender address for Resend. In production it must use a domain verified in Resend. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Turns on "Continue with Google". See [Google and Facebook sign-in](#google-and-facebook-sign-in). |
-| `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` | No | Turns on "Continue with Facebook" (Facebook calls these App ID and App Secret). |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Turns on "Continue with Google". See [Google and GitHub sign-in](#google-and-github-sign-in). |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | No | Turns on "Continue with GitHub". |
 | `LOG_RESET_LINKS` | Local only | Set to `1` to print password-reset links in the server log when no email provider is set up |
 
 ---
@@ -160,7 +160,7 @@ src/
 │   │   ├── login/
 │   │   └── (panel)/            Dashboard, reservations, messages, menu, settings
 │   ├── api/me/route.ts         Signed-in user's details for the booking form
-│   ├── api/auth/[provider]/    Google and Facebook sign-in (start and callback)
+│   ├── api/auth/[provider]/    Google and GitHub sign-in (start and callback)
 │   ├── fonts/                  Self-hosted fonts
 │   ├── layout.tsx  globals.css Root layout, fonts and theme
 │   └── sitemap.ts  robots.ts  not-found.tsx
@@ -178,7 +178,7 @@ prisma/
 ### Data model
 
 - **Content:** `Settings` (one row with business details, texts and images), `OpeningHour`, `Category`, `MenuItem`, `Highlight`
-- **Customers:** `User` (login and profile), `OAuthAccount` (linked Google or Facebook logins), `Session` (hashed tokens), `PasswordResetToken` (hashed, single use)
+- **Customers:** `User` (login and profile), `OAuthAccount` (linked Google or GitHub logins), `Session` (hashed tokens), `PasswordResetToken` (hashed, single use)
 - **Bookings and inbox:** `Reservation`, `Message`
 
 ---
@@ -212,7 +212,7 @@ The booking form offers today, tomorrow or a chosen date, 30-minute slots with a
 - **Rate limits** per IP on sign-in, sign-up, password reset, booking, contact and admin login
 - **Password rules:** at least 10 characters, with letters plus a number or symbol, and common passwords blocked
 - **Reset links** are single use, expire after 1 hour, are stored hashed, and sign out all devices when used
-- **Social sign-in:** OAuth state check (plus PKCE for Google), and a Google or Facebook login is linked to an existing account only when the provider confirms the email is verified
+- **Social sign-in:** OAuth state check plus PKCE, and a Google or GitHub login is linked to an existing account only when the provider confirms the email is verified
 - **Safe redirects:** the `?next=` parameter only allows paths on this site
 - **CSRF:** Next.js Server Actions check the request's Origin header
 - **Security headers:** HSTS (production), `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `Cross-Origin-Opener-Policy`
@@ -222,31 +222,33 @@ The booking form offers today, tomorrow or a chosen date, 30-minute slots with a
 
 ---
 
-## Google and Facebook sign-in
+## Google and GitHub sign-in
 
-The "Continue with Google" and "Continue with Facebook" buttons appear only after you add that provider's keys. Without keys, the sign-in page shows the email form only, so visitors never see a button that does not work.
+The "Continue with Google" and "Continue with GitHub" buttons appear only after you add that provider's keys. Without keys, the sign-in page shows the email form only, so visitors never see a button that does not work.
 
 How accounts work:
 
 - A new person gets an account with no password. They can add one later from **Account > Security > Set a password**.
-- If someone signs in with Google or Facebook using the same verified email as an existing account, the two are linked, so they keep their bookings.
+- If someone signs in with Google or GitHub using the same verified email as an existing account, the two are linked, so they keep their bookings.
+- GitHub often hides a person's email on their profile, so the site reads their primary verified email instead. Someone with no verified email on GitHub is asked to use email sign-up.
 - New social accounts go to the short profile step (phone and seating) before booking.
 
 ### Google
 
 1. Open [Google Cloud Console](https://console.cloud.google.com) and create or pick a project.
-2. Go to **APIs & Services > OAuth consent screen**. Choose **External**, add the app name "Fasana Café", a support email and your domain, then publish the app.
-3. Go to **APIs & Services > Credentials > Create credentials > OAuth client ID**. Choose **Web application**.
-4. Under **Authorized redirect URIs**, add `https://YOUR-DOMAIN/api/auth/google/callback` (and `http://localhost:3000/api/auth/google/callback` for local testing).
-5. Copy the client ID and secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+2. In **Google Auth Platform**, click **Get started**. Add the app name "Fasana Café" and a support email, choose **External**, and finish.
+3. In **Branding**, add the home page and `https://YOUR-DOMAIN/privacy` as the privacy policy link.
+4. In **Clients**, click **Create client** and choose **Web application**. Add `https://YOUR-DOMAIN/api/auth/google/callback` under **Authorized redirect URIs** (and `http://localhost:3000/api/auth/google/callback` for local testing).
+5. Copy the client ID and secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Google shows the secret only once.
+6. In **Audience**, click **Publish app** so anyone can sign in, not just test users.
 
-### Facebook
+### GitHub
 
-1. Open [Meta for Developers](https://developers.facebook.com/apps) and create an app. Choose the use case **Authenticate and request data from users with Facebook Login**.
-2. In the use case settings, make sure the **email** permission is added.
-3. Under **Facebook Login > Settings**, add `https://YOUR-DOMAIN/api/auth/facebook/callback` to **Valid OAuth Redirect URIs**.
-4. In **App settings > Basic**, add a privacy policy URL, then copy the **App ID** and **App Secret** into `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET`.
-5. Switch the app from **Development** to **Live** so everyone can use it, not just app testers.
+1. On GitHub, go to **Settings > Developer settings > OAuth Apps > New OAuth App**.
+2. Application name `Fasana Café`, homepage URL `https://YOUR-DOMAIN`.
+3. Authorization callback URL: `https://YOUR-DOMAIN/api/auth/github/callback`. You can add `http://localhost:3000/api/auth/github/callback` as a second callback URL for local testing.
+4. Click **Register application**, copy the **Client ID**, then click **Generate a new client secret** and copy it straight away. GitHub shows it only once.
+5. Put them in `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`.
 
 The redirect address is built from `NEXT_PUBLIC_SITE_URL`, so it must match the address you registered exactly. After adding keys on Vercel, redeploy.
 
