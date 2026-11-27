@@ -40,7 +40,7 @@ export default async function PrivacyPage() {
         <ul>
           <li><strong>When you book a table:</strong> your name, phone or WhatsApp number, email if you give it, date, time, number of guests, seating choice and any notes.</li>
           <li><strong>When you create an account:</strong> your name, email and a password (stored only as a scrambled hash we cannot read). Optionally your phone, seating preference, dietary notes and whether you want offers.</li>
-          <li><strong>When you sign in with Google or Facebook:</strong> only your name, email address and an account ID from that service. We never see your Google or Facebook password and we never post anything for you.</li>
+          <li><strong>When you sign in with Google or GitHub:</strong> only your name, email address and an account ID from that service. We never see your Google or GitHub password and we never post or change anything for you.</li>
           <li><strong>When you message us or join the newsletter:</strong> your name, contact details and message.</li>
           <li><strong>Technical basics:</strong> your browser type for the &quot;signed-in devices&quot; list, and your IP address for a short time to block spam and repeated failed sign-ins.</li>
         </ul>
@@ -63,7 +63,7 @@ export default async function PrivacyPage() {
       title: "Cookies",
       body: (
         <p>
-          We use a small number of cookies that the site needs to work: one keeps you signed in, one shows your first name in the menu, one remembers light or dark mode, and a short-lived one protects Google and Facebook sign-in. We do not use advertising cookies or sell your data.
+          We use a small number of cookies that the site needs to work: one keeps you signed in, one shows your first name in the menu, one remembers light or dark mode, and a short-lived one protects Google and GitHub sign-in. We do not use advertising cookies or sell your data.
         </p>
       ),
     },
@@ -77,7 +77,7 @@ export default async function PrivacyPage() {
             <li><strong>Vercel</strong> hosts the website.</li>
             <li><strong>Prisma Postgres</strong> stores the database.</li>
             <li><strong>Resend</strong> sends booking alerts and password-reset emails.</li>
-            <li><strong>Google</strong> and <strong>Facebook</strong> confirm who you are, only if you choose to sign in with them.</li>
+            <li><strong>Google</strong> and <strong>GitHub</strong> confirm who you are, only if you choose to sign in with them.</li>
           </ul>
         </>
       ),
@@ -100,10 +100,10 @@ export default async function PrivacyPage() {
           <ol>
             <li>Sign in and open <Link href="/account#security" className="link-underline">Account</Link>.</li>
             <li>Go to <strong>Security</strong> and choose <strong>Delete account</strong>.</li>
-            <li>Type your email to confirm. Your profile, saved details, linked Google or Facebook login and all sign-in sessions are removed straight away.</li>
+            <li>Type your email to confirm. Your profile, saved details, linked Google or GitHub login and all sign-in sessions are removed straight away.</li>
           </ol>
           <p>
-            If you signed in with Facebook, you can also remove {s.name} from Facebook under <strong>Settings &amp; privacy &gt; Settings &gt; Apps and websites</strong>, then ask us to delete your data. To ask us to delete booking details or messages, {contact}, and we&apos;ll do it within 30 days.
+            If you signed in with Google or GitHub, you can also remove {s.name} from that account: in Google, under <strong>Security &gt; Your connections to third-party apps</strong>; in GitHub, under <strong>Settings &gt; Applications &gt; Authorized OAuth Apps</strong>. To ask us to delete booking details or messages, {contact}, and we&apos;ll do it within 30 days.
           </p>
         </>
       ),
