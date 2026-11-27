@@ -20,7 +20,7 @@ const fields: F[] = [
   { name: "instagram", label: "Instagram URL", type: "url" },
   { name: "facebook", label: "Facebook URL", type: "url" },
   { name: "foodpandaUrl", label: "Foodpanda URL", type: "url" },
-  { name: "mapsUrl", label: "Google Maps link", type: "url" },
+  { name: "mapsUrl", label: "Google Maps link", type: "url", hint: "In Google Maps, open the café, tap Share and paste the link here (maps.app.goo.gl/...)." },
   { name: "mapEmbedQuery", label: "Map search text", hint: "What the embedded map searches for" },
   { name: "heroImage", label: "Hero image URL (portrait, 4:5)", type: "url", full: true, hint: "Top of the home page. Leave empty to show the designed placeholder." },
   { name: "storyImage", label: "Story image URL (landscape, 3:2)", type: "url", full: true, hint: "Used on the home page and the Our story page." },
