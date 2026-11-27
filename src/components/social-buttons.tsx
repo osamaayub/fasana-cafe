@@ -11,19 +11,18 @@ function GoogleLogo() {
   );
 }
 
-function FacebookLogo() {
+function GitHubLogo() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden className="h-5 w-5 shrink-0">
-      <circle cx="12" cy="12" r="12" fill="#1877F2" />
-      <path fill="#fff" d="M15.1 15.5l.5-3.3h-3.2v-2.1c0-.9.4-1.8 1.9-1.8h1.4V5.5s-1.3-.2-2.5-.2c-2.6 0-4.3 1.6-4.3 4.4v2.5H6v3.3h2.9V24h3.5v-8.5h2.7z" />
+    <svg viewBox="0 0 24 24" aria-hidden className="h-5 w-5 shrink-0" fill="currentColor">
+      <path d="M12 .5C5.7.5.5 5.7.5 12.1c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2.1c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6a11.6 11.6 0 0 0 7.9-10.9C23.5 5.7 18.3.5 12 .5z" />
     </svg>
   );
 }
 
-const logos: Record<ProviderId, () => React.JSX.Element> = { google: GoogleLogo, facebook: FacebookLogo };
+const logos: Record<ProviderId, () => React.JSX.Element> = { google: GoogleLogo, github: GitHubLogo };
 
 /**
- * "Continue with Google / Facebook" buttons. Plain links, so they work before JavaScript loads.
+ * "Continue with Google / GitHub" buttons. Plain links, so they work before JavaScript loads.
  * Renders nothing until a provider's keys are set, so visitors never see a button that can't work.
  */
 export function SocialButtons({ next, mode }: { next?: string; mode: "signin" | "signup" }) {
