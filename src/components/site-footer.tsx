@@ -108,7 +108,7 @@ export function SiteFooter({ s, hours }: { s: Settings; hours: OpeningHour[] }) 
       <div className="relative border-t border-frost/10">
         <div className="container-x flex flex-col gap-2 py-5 text-xs text-frost/50 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {s.name}. Made with care in Lahore.</p>
-          <nav className="flex gap-5"><Link href="/reserve" className="hover:text-frost">Book a table</Link><Link href="/contact" className="hover:text-frost">Contact</Link><Link href="/menu" className="hover:text-frost">Menu</Link></nav>
+          <nav className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/reserve" className="hover:text-frost">Book a table</Link><Link href="/contact" className="hover:text-frost">Contact</Link><Link href="/menu" className="hover:text-frost">Menu</Link><Link href="/privacy" className="hover:text-frost">Privacy</Link></nav>
         </div>
       </div>
     </footer>
