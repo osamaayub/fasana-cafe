@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { OpeningHour, Settings } from "@lib/types";
 import { DAYS, to12h } from "@lib/format";
+import { mapsLink } from "@lib/maps";
+import { HideOnAuth } from "./hide-on-auth";
 import { Wordmark } from "./wordmark";
 import { OpenBadge } from "./open-badge";
 import { Arrow, Chat, Instagram, Phone, Pin } from "./icons";
@@ -28,7 +30,8 @@ export function SiteFooter({ s, hours }: { s: Settings; hours: OpeningHour[] }) 
     <footer className="relative overflow-hidden bg-night text-frost/75">
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-lamp/10 blur-3xl" />
 
-      {/* CTA band */}
+      {/* CTA band (hidden on sign-in screens) */}
+      <HideOnAuth>
       <div className="relative border-b border-frost/10">
         <div className="container-x flex flex-wrap items-center justify-between gap-6 py-12">
           <div>
@@ -44,6 +47,7 @@ export function SiteFooter({ s, hours }: { s: Settings; hours: OpeningHour[] }) 
           </Link>
         </div>
       </div>
+      </HideOnAuth>
 
       <div className="container-x relative grid gap-12 py-16 md:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr]">
         <div>
@@ -75,7 +79,7 @@ export function SiteFooter({ s, hours }: { s: Settings; hours: OpeningHour[] }) 
         <div className="text-sm">
           <h2 className="mb-4 font-sans text-xs font-bold uppercase tracking-[0.18em] text-frost/50">Find us</h2>
           <p className="flex items-start gap-2 leading-relaxed"><Pin className="mt-0.5 h-4 w-4 shrink-0 text-lamp/70" />{s.address}</p>
-          <a href={s.mapsUrl} target="_blank" rel="noopener" className="mt-3 inline-block text-lamp hover:underline">Open in Google Maps</a>
+          <a href={mapsLink(s)} target="_blank" rel="noopener" className="mt-3 inline-block text-lamp hover:underline">Open in Google Maps</a>
         </div>
         <div className="text-sm">
           <h2 className="mb-4 font-sans text-xs font-bold uppercase tracking-[0.18em] text-frost/50">Hours</h2>
