@@ -64,22 +64,19 @@ export async function AuthShell({ title, intro, children, footer }: { title: str
         </div>
       </aside>
 
-      {/* Form side */}
-      <div className="relative flex items-center justify-center overflow-hidden px-5 py-14 sm:px-10 lg:py-10">
+      {/* Form side: compact on phones so the form is visible without scrolling */}
+      <div className="relative flex justify-center overflow-hidden px-4 pb-14 pt-8 sm:px-8 sm:pt-14 lg:items-center lg:py-12">
         <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-[26rem] w-[44rem] -translate-x-1/2 rounded-full bg-glow blur-3xl" />
-        <div className="relative w-full max-w-md">
-          {photos[0] && (
-            <div className="relative mx-auto mb-6 aspect-[2/1] w-40 overflow-hidden rounded-2xl shadow-lg lg:hidden">
-              <Image src={photos[0]} alt="" quality={90} fill sizes="160px" className="object-cover" />
-            </div>
-          )}
-          <p lang="ur" dir="rtl" className="mb-4 text-center font-urdu text-4xl leading-[1.6] text-ink/80 lg:hidden" aria-hidden>
-            فسانہ
-          </p>
-          <h1 className="text-center text-5xl sm:text-6xl">{title}</h1>
-          {intro && <p className="mx-auto mt-3 max-w-sm text-center text-muted">{intro}</p>}
-          <div className="mt-8 rounded-[1.75rem] border border-line bg-sheet p-6 shadow-[0_30px_60px_-36px_rgba(22,33,59,.35)] sm:p-8">{children}</div>
-          {footer && <div className="mt-6 text-center text-sm text-muted">{footer}</div>}
+        <div className="relative w-full max-w-[27rem]">
+          <header className="text-center">
+            <p lang="ur" dir="rtl" className="font-urdu text-3xl leading-[1.7] text-ember lg:hidden" aria-hidden>
+              فسانہ
+            </p>
+            <h1 className="text-[2.5rem] leading-[1.05] sm:text-5xl">{title}</h1>
+            {intro && <p className="mx-auto mt-3 max-w-[22rem] text-balance text-[15px] leading-relaxed text-muted sm:text-base">{intro}</p>}
+          </header>
+          <div className="mt-7 rounded-[1.75rem] border border-line bg-sheet p-5 shadow-[0_30px_60px_-36px_rgba(22,33,59,.35)] sm:mt-8 sm:p-8">{children}</div>
+          {footer && <div className="mt-6 space-y-3 text-center text-sm text-muted">{footer}</div>}
         </div>
       </div>
     </div>
