@@ -16,7 +16,10 @@ const emailInput = { type: "email", autoComplete: "email", inputMode: "email", a
 
 const trust = (
   <p className="flex items-center justify-center gap-1.5 text-xs text-muted">
-    <Shield className="h-3.5 w-3.5 text-ember" /> Your details stay private. We only use them for bookings.
+    <Shield className="h-3.5 w-3.5 shrink-0 text-ember" />
+    <span>
+      Your details stay private. <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy policy</Link>
+    </span>
   </p>
 );
 
