@@ -31,8 +31,10 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   if (await prisma.user.findUnique({ where: { email } })) {
     return { ok: false, values, errors: { email: "This email already has an account. Sign in, or reset your password." } };
   }
-  await prisma.user.create({ data: { name, email, passwordHash: await hashPassword(password) } });
-  redirect("/signin?notice=account-created");
+  const user = await prisma.user.create({ data: { name, email, passwordHash: await hashPassword(password) } });
+  // Sign the new customer in and take them to step 2 (phone and seating), instead of asking for the password again.
+  await startSession(user.id, firstName(user.name));
+  redirect("/account/setup");
 }
 
 /* ---------- sign in ---------- */
