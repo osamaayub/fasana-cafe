@@ -15,7 +15,7 @@ const notices: Record<string, string> = {
   "account-created": "Account created! Sign in to book your table.",
 };
 
-// Messages for problems coming back from Google or Facebook.
+// Messages for problems coming back from Google or GitHub.
 const errors: Record<string, string> = {
   cancelled: "Sign-in was cancelled. Try again, or use your email below.",
   expired: "That sign-in took too long. Please try again.",
