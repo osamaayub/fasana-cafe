@@ -1,271 +1,279 @@
 # Fasana Café
 
-The website for **Fasana Café** — a café and bookstore in Bahria Town, Lahore. Built with **Next.js 15 (App Router)**, **Prisma 7**, **PostgreSQL**, and **Tailwind CSS 4**.
+Website for **Fasana Café**, a book-themed café and kitchen above the Readings bookstore in Sector C, Bahria Town, Lahore.
 
-A single codebase powers the public site, customer accounts, table booking, and a password-protected staff admin panel — all content is editable from the admin, no code changes needed.
+One Next.js app runs the public website, table bookings, customer accounts and a staff admin panel. Staff can change every text, photo, price and opening hour from the admin panel, so the café never needs a developer for content updates.
+
+**Stack:** Next.js 16 (App Router) · React 19 · Prisma 7 · PostgreSQL (Prisma Postgres) · Tailwind CSS 4 · TypeScript
 
 ---
 
-## Table of contents
+## Contents
 
 - [Features](#features)
 - [Tech stack](#tech-stack)
-- [Quick start](#quick-start)
+- [Getting started](#getting-started)
 - [Environment variables](#environment-variables)
 - [Scripts](#scripts)
 - [Project structure](#project-structure)
 - [How it works](#how-it-works)
-- [Security model](#security-model)
-- [Admin panel](#admin-panel)
+- [Security](#security)
 - [Deployment](#deployment)
 - [Changing the database schema](#changing-the-database-schema)
-- [Content notes](#content-notes)
+- [Content and photo credits](#content-and-photo-credits)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Features
 
-### Public site
+### Public website
 
-- Home, Menu, About, Reserve, and Contact pages — fully responsive
-- Every word and image comes from the database and can be edited in the admin panel (hero text, opening hours, business info, photos)
-- Menu with category tabs, live search, and prices in PKR ("Ask staff" when no price is published)
-- Reservation form and contact form with server-side validation (zod), a spam honeypot, and per-IP rate limiting
-- Live **Open now / Closed now** badge computed in the visitor's browser (Lahore time), so cached pages stay accurate
-- WhatsApp chat button, click-to-call, Google Maps embed, and directions
-- SEO: per-page metadata, Open Graph / Twitter cards, `CafeOrCoffeeShop` JSON-LD, `sitemap.xml`, `robots.txt`
-- Performance: public pages are statically prerendered and cached (ISR, 1 hour). Saving in admin revalidates them instantly. Fonts are self-hosted; almost no JavaScript ships to the browser
+- Pages: Home, Menu, About, Gallery, FAQ, Contact and Reserve, all responsive, with light and dark mode
+- Menu with category tabs, live search, dish details and prices in PKR ("Ask staff" when no price is published)
+- Table booking with date and 30-minute time slots, guest count, seating choice and an "Add to calendar" file after booking
+- Contact form and newsletter sign-up, both with server-side validation, a spam honeypot and per-IP rate limits
+- "Open now / Closed now" badge worked out in the visitor's browser in Lahore time, so cached pages stay correct
+- WhatsApp chat button, click-to-call, Google Maps embed and directions
+- SEO: per-page metadata, Open Graph and Twitter cards, `CafeOrCoffeeShop` JSON-LD, `sitemap.xml` and `robots.txt`
+- Fast: public pages are prerendered and cached for one hour, and fonts are self-hosted
 
 ### Customer accounts
 
-- Sign up, sign in, forgot password, and reset password flows
-- Guided profile setup after sign-up: name, phone/WhatsApp, preferred seating (indoors / terrace / no preference), dietary notes, and an opt-in for offers
-- **My account** dashboard:
-  - Upcoming and past bookings with one-click self-service cancel
-  - Profile editing (booking details are pre-filled on the reservation form)
-  - Password change (signs out every other device)
-  - List of signed-in devices with per-device sign-out and "sign out everywhere"
-  - Account deletion
-- Dietary notes and seating preference automatically apply to new bookings
+- Sign up, sign in, forgot password and reset password
+- Sign-up signs the customer in and opens a short profile step: phone or WhatsApp, seating preference, dietary notes and an offers opt-in
+- Account page with upcoming and past bookings, self-service cancel, profile editing and password change
+- List of signed-in devices with sign-out per device or everywhere, plus account deletion
+- Saved details fill in the booking form automatically
 
 ### Admin panel (`/admin`)
 
-Separate login (env credentials, not a customer account):
+Staff sign in with the admin email and password from the environment variables. This login is separate from customer accounts.
 
-- **Dashboard** — pending bookings, upcoming bookings, unread messages at a glance
-- **Reservations** — filter, confirm or cancel, one-click WhatsApp confirmation to the guest, delete
-- **Messages** — read/unread, delete
-- **Menu** — add, edit, delete categories and items; set prices; mark items featured or hidden; drag-free reordering
-- **Settings** — business info, marketing texts, links, hero/story/booking images, photo strip, opening hours
-- Optional email alerts for new bookings and messages via [Resend](https://resend.com)
+- **Dashboard:** pending bookings, upcoming bookings and unread messages
+- **Reservations:** filter, confirm or cancel, send a one-click WhatsApp confirmation, delete
+- **Messages:** contact form messages and newsletter sign-ups, mark read or unread, delete
+- **Menu:** add, edit and delete categories and items, set prices, feature or hide items, change the order
+- **Settings:** business details, page texts, links, hero and section images, photo strip and opening hours
+- Optional email alerts for new bookings and messages through [Resend](https://resend.com)
 
 ---
 
 ## Tech stack
 
 | Layer | Choice |
-|---|---|
-| Framework | Next.js 15, App Router, React 19, Server Actions |
-| Database | PostgreSQL via Prisma 7 (`@prisma/adapter-pg`) |
-| Styling | Tailwind CSS 4 (CSS-first config in `globals.css`) |
-| Auth | Custom: scrypt password hashing, database-backed revocable sessions |
+| --- | --- |
+| Framework | Next.js 16 App Router, React 19, Server Actions |
+| Database | PostgreSQL on [Prisma Postgres](https://www.prisma.io/postgres), through Prisma 7 and `@prisma/adapter-pg` |
+| Styling | Tailwind CSS 4 (configured in `src/app/globals.css`) |
+| Auth | Custom: scrypt password hashing and database sessions you can revoke; signed JWT cookie (`jose`) for admin |
 | Validation | zod |
-| Fonts | Self-hosted Instrument Sans/Serif + a Nastaliq subset for the Urdu wordmark |
 | Email | Resend (optional) |
-| Hosting | Vercel (any Node host works) |
+| Fonts | Self-hosted Instrument Sans and Instrument Serif, plus a Nastaliq subset for the Urdu wordmark |
+| Hosting | Vercel (any Node.js host works) |
+| CI | GitHub Actions |
 
 ---
 
-## Quick start
+## Getting started
+
+### Requirements
+
+- Node.js 20 or newer (CI uses Node 22)
+- A PostgreSQL database. We use **Prisma Postgres**, which has a free tier.
+
+### 1. Create a Prisma Postgres database
+
+1. Sign in at [console.prisma.io](https://console.prisma.io).
+2. Create a new database.
+3. Click **Connect** and copy the **direct** connection string. It starts with `postgres://` and points to `db.prisma.io:5432`.
+
+Use the direct `postgres://` URL. The `prisma+postgres://` URL does not work with the `pg` adapter this project uses.
+
+Any other PostgreSQL database (Neon, Supabase, a local Docker container) also works.
+
+### 2. Install and run
 
 ```bash
-npm install                 # installs deps and runs `prisma generate`
-cp .env.example .env.local  # then fill it in (see below)
-npm run setup               # applies migrations and seeds the Fasana data
-npm run dev                 # → http://localhost:3000  (admin at /admin)
+git clone https://github.com/osamaayub/fasana-cafe.git
+cd fasana-cafe
+
+npm install                  # installs packages and generates the Prisma client
+cp .env.example .env.local   # then fill in the values (see below)
+npm run setup                # creates the tables and loads the Fasana starter content
+npm run dev                  # http://localhost:3000
 ```
 
-> You need a PostgreSQL database. The easiest option is **Prisma Postgres** (free tier):
-> console.prisma.io → create a database → **Connect** → copy the direct `postgres://...` URL into `DATABASE_URL`.
-> Any other Postgres (Neon, Supabase, local Docker) works too.
-
-First admin login: the `ADMIN_EMAIL` / `ADMIN_PASSWORD` from your `.env.local`.
+Open [http://localhost:3000/admin](http://localhost:3000/admin) and sign in with the `ADMIN_EMAIL` and `ADMIN_PASSWORD` from your `.env.local`.
 
 ---
 
 ## Environment variables
 
-Secrets live in **`.env.local`** locally (gitignored) and in the host's env vars on Vercel. `.env` holds only non-secret defaults; `prisma.config.ts` loads `.env.local` first, then `.env`, and Next.js does the same — so `npm run dev`, `prisma migrate`, `prisma db seed`, and `npm run studio` all see the same values.
+Put your values in `.env.local` for local work. This file is gitignored. On Vercel, add the same variables in the project settings. Both Next.js and `prisma.config.ts` read `.env.local` first and then `.env`.
 
-| Variable | Required | What it is |
-|---|---|---|
-| `DATABASE_URL` | ✅ | Postgres connection string. For Prisma Postgres use the **direct** `postgres://USER:PASS@db.prisma.io:5432/...` URL (the `prisma+postgres://` URL won't work with the `pg` adapter). Local dev: the `fasana-db` Docker container (`docker start fasana-db`, `localhost:55432`). |
-| `ADMIN_EMAIL` | ✅ | Staff admin login email |
-| `ADMIN_PASSWORD` | ✅ | Staff admin login password — use a strong one |
-| `AUTH_SECRET` | ✅ | Random 32+ char string for signing admin session cookies. Generate: `openssl rand -base64 32` |
-| `NEXT_PUBLIC_SITE_URL` | ✅ | Public URL of the site, e.g. `https://fasanacafe.pk`. Used for SEO, sitemap, reset links, and JSON-LD. |
-| `RESEND_API_KEY` | optional | Enables email alerts (bookings/messages) **and** password-reset emails. Without it, reset emails can't be delivered — fine for local dev, not for production. |
-| `NOTIFY_EMAIL_TO` | optional | Where staff alerts go |
-| `NOTIFY_EMAIL_FROM` | optional | Sender address for Resend (must be a verified domain in production) |
-| `LOG_RESET_LINKS` | dev only | Set to `1` to print password-reset links to the server log when no email provider is configured |
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string. For Prisma Postgres, use the direct `postgres://...@db.prisma.io:5432/...` URL. |
+| `ADMIN_EMAIL` | Yes | Email for the staff admin login |
+| `ADMIN_PASSWORD` | Yes | Password for the staff admin login. Use a strong one. |
+| `AUTH_SECRET` | Yes | Random string of 32+ characters that signs the admin session cookie. Generate one with `openssl rand -base64 32`. |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Public address of the site, for example `https://fasanacafe.pk`. Used for SEO, the sitemap, JSON-LD and password-reset links. |
+| `RESEND_API_KEY` | No | Turns on email alerts and password-reset emails. Without it, reset emails are not sent. |
+| `NOTIFY_EMAIL_TO` | No | Where staff alerts are sent |
+| `NOTIFY_EMAIL_FROM` | No | Sender address for Resend. In production it must use a domain verified in Resend. |
+| `LOG_RESET_LINKS` | Local only | Set to `1` to print password-reset links in the server log when no email provider is set up |
 
 ---
 
 ## Scripts
 
 | Command | What it does |
-|---|---|
-| `npm run dev` | Start the dev server |
-| `npm run build` | `prisma generate` + production build |
-| `npm run start` | Serve the production build |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run setup` | `prisma migrate deploy` + seed (first-time setup) |
+| --- | --- |
+| `npm run dev` | Start the development server |
+| `npm run build` | Generate the Prisma client and build for production |
+| `npm run start` | Run the production build |
+| `npm run typecheck` | Check types with `tsc --noEmit` |
+| `npm run setup` | Apply migrations and load starter content (first-time setup) |
 | `npm run db:migrate` | Apply pending migrations |
-| `npm run db:seed` | Load/update the Fasana starter content |
-| `npm run studio` | Open Prisma Studio |
-| `npm run vercel-build` | What Vercel runs: generate → migrate → seed → build |
+| `npm run db:seed` | Load starter content. Existing settings and menu are left as they are. |
+| `npm run studio` | Open Prisma Studio to browse the data |
+| `npm run vercel-build` | What Vercel runs: generate, migrate, seed, then build |
 
 ---
 
 ## Project structure
 
-```
+```text
 src/
 ├── app/
-│   ├── (site)/                  # Public site + customer accounts
-│   │   ├── page.tsx              #   Home
-│   │   ├── menu/  about/  contact/
-│   │   ├── reserve/              #   Table booking
+│   ├── (site)/                 Public site and customer accounts
+│   │   ├── page.tsx            Home
+│   │   ├── menu/  about/  gallery/  faq/  contact/
+│   │   ├── reserve/            Table booking
 │   │   ├── signin/  signup/  forgot-password/  reset-password/
-│   │   └── account/              #   Dashboard + profile setup
-│   ├── admin/                    # Staff panel (own login)
+│   │   └── account/            Account page and profile setup
+│   ├── admin/                  Staff panel with its own login
 │   │   ├── login/
-│   │   └── (panel)/              #   dashboard, reservations, messages, menu, settings
-│   ├── api/me/route.ts           #   Current-user JSON for the booking form
-│   ├── layout.tsx  globals.css   #   Root layout, fonts, theme tokens
+│   │   └── (panel)/            Dashboard, reservations, messages, menu, settings
+│   ├── api/me/route.ts         Signed-in user's details for the booking form
+│   ├── fonts/                  Self-hosted fonts
+│   ├── layout.tsx  globals.css Root layout, fonts and theme
 │   └── sitemap.ts  robots.ts  not-found.tsx
-├── actions/                      #   Server actions: public.ts, account.ts, admin.ts
-├── components/                   # Shared UI (header, footer, forms, icons…) — import as @ui/*
-└── lib/                          # Data access, auth, sessions, validation, email — import as @lib/*
+├── actions/                    Server Actions: public.ts, account.ts, admin.ts
+├── components/                 Shared UI (import as @ui/*)
+├── lib/                        Data access, auth, sessions, validation, email (import as @lib/*)
+└── proxy.ts                    Protects /account and /admin routes
 prisma/
-├── schema.prisma                 # Data model
-├── migrations/                   # SQL migrations
-└── seed.ts                       # Starter content (settings, hours, menu, highlights)
-.github/workflows/ci.yml          # CI: Postgres + migrate + seed + typecheck + build
+├── schema.prisma               Data model
+├── migrations/                 SQL migrations
+└── seed.ts                     Starter content: settings, hours, menu, highlights
+.github/workflows/ci.yml        CI: Postgres, migrate, seed, typecheck, build
 ```
 
-### Data model (high level)
+### Data model
 
-- **Content**: `Settings` (one row — business info, texts, images), `OpeningHour`, `Category`/`MenuItem`, `Highlight`
-- **Customers**: `User` (credentials + profile), `Session` (hashed tokens), `PasswordResetToken` (hashed, single-use)
-- **Bookings & inbox**: `Reservation`, `Message`
+- **Content:** `Settings` (one row with business details, texts and images), `OpeningHour`, `Category`, `MenuItem`, `Highlight`
+- **Customers:** `User` (login and profile), `Session` (hashed tokens), `PasswordResetToken` (hashed, single use)
+- **Bookings and inbox:** `Reservation`, `Message`
 
 ---
 
 ## How it works
 
-**Rendering & caching**
+### Rendering and caching
 
-Public pages are prerendered with `revalidate = 3600`. Admin writes call `revalidatePath`/`revalidateTag`, so the live site updates immediately after a save while staying fast for visitors. Account pages are `force-dynamic` and send `Cache-Control: private, no-store`.
+Public pages are prerendered and refreshed every hour (`revalidate = 3600`). When staff save a change in the admin panel, the affected pages are refreshed right away, so the live site updates without a redeploy. Account and admin pages are always rendered fresh and sent with `Cache-Control: private, no-store`.
 
-**Accounts & sessions**
+### Customer sessions
 
-- Passwords are hashed with **scrypt** (N=32768, random salt per user, timing-safe compare). `src/lib/password.ts` also burns CPU on unknown-email sign-ins so response times don't reveal whether an account exists.
-- On sign-in a random 256-bit token goes into an `httpOnly`, `SameSite=Lax`, `Secure`-in-prod cookie; only its SHA-256 hash is stored in the `Session` table — so sessions can be revoked server-side ("sign out everywhere", password change, admin delete).
-- Sessions last 30 days and slide forward on activity.
+- Passwords are hashed with scrypt (N=32768, a random salt per user) and compared in constant time.
+- Sign-in creates a random token in an `httpOnly`, `SameSite=Lax` cookie (`Secure` in production). Only a SHA-256 hash of the token is stored, so sessions can be ended from the server ("sign out everywhere", password change, account deletion).
+- Sessions last 30 days and extend while the customer is active.
 
-**Booking flow**
+### Bookings
 
-The reservation form offers today/tomorrow/custom date, 30-minute time slots (filtered to ≥30 min notice, Lahore time), a guest counter, and seating preference. Signed-in users are detected via the `fasana_name` hint cookie and their profile is fetched from `/api/me` to pre-fill details. Submissions are validated server-side, rate-limited, honeypot-protected, and land in the admin Reservations list for staff to confirm (with a one-click WhatsApp message to the guest).
+The booking form offers today, tomorrow or a chosen date, 30-minute slots with at least 30 minutes' notice in Lahore time, a guest counter and a seating choice. Signed-in customers get their details filled in from `/api/me`. Each booking is validated on the server, rate limited and checked with a honeypot, then appears in **Admin > Reservations** for staff to confirm.
 
-**Admin auth**
+### Admin login
 
-`/admin` uses its own signed session cookie derived from `AUTH_SECRET` — completely separate from customer accounts.
-
----
-
-## Security model
-
-- No account enumeration: sign-in and forgot-password return identical responses whether or not the email exists
-- Account lockout: 15 minutes after 5 failed passwords, plus per-IP rate limits on sign-in, sign-up, reset, booking, and contact forms (in-memory; see note below)
-- Password rules: 10+ chars, letters plus a number or symbol, common-password and email-name blocklist
-- Reset links: single-use, expire after 1 hour, stored hashed; using one signs out all devices
-- Open-redirect protection on `?next=` (`safeNext` allows only same-site paths)
-- CSRF: Next.js server actions verify the Origin header
-- Security headers: HSTS (production), `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `COOP`
-- All user input validated with zod schemas in `src/lib/validation.ts` and `src/lib/account-validation.ts`
-
-> **Rate limits are in-memory** — fine on a single instance (e.g. one Vercel function warm at a time is not guaranteed; for strict limits at scale, move them to Redis/Upstash).
+`/admin` uses its own session cookie signed with `AUTH_SECRET`. It has nothing to do with customer accounts. `src/proxy.ts` sends anyone without a valid session to the login page.
 
 ---
 
-## Admin panel
+## Security
 
-1. Visit `/admin` and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-2. **Reservations** is the daily driver: confirm tables, message guests on WhatsApp, cancel.
-3. **Menu** and **Settings** are where you edit all public content — hero copy, photos (paste image URLs, one per line for the strip), hours, prices, the About story.
-4. Email alerts (optional): set `RESEND_API_KEY` + `NOTIFY_EMAIL_TO` to get pinged on new bookings and messages.
+- **No account guessing:** sign-in and forgot-password give the same response whether or not the email exists
+- **Lockout:** an account locks for 15 minutes after 5 wrong passwords
+- **Rate limits** per IP on sign-in, sign-up, password reset, booking, contact and admin login
+- **Password rules:** at least 10 characters, with letters plus a number or symbol, and common passwords blocked
+- **Reset links** are single use, expire after 1 hour, are stored hashed, and sign out all devices when used
+- **Safe redirects:** the `?next=` parameter only allows paths on this site
+- **CSRF:** Next.js Server Actions check the request's Origin header
+- **Security headers:** HSTS (production), `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `Cross-Origin-Opener-Policy`
+- **Input validation** with zod in `src/lib/validation.ts` and `src/lib/account-validation.ts`
+
+> **Note:** rate limits are kept in memory, so each server instance counts on its own. That is fine for a small site. For strict limits across many Vercel instances, move them to Redis (for example Upstash).
 
 ---
 
 ## Deployment
 
-### GitHub → Vercel (recommended)
+### Vercel (recommended)
 
-**1. Push to GitHub**
+1. On [vercel.com](https://vercel.com), choose **Add New > Project** and import this repository.
+2. Add every variable from `.env.example`. Use your production Prisma Postgres `DATABASE_URL`, a new `AUTH_SECRET` and your live `NEXT_PUBLIC_SITE_URL`. Add the Resend values if you want emails.
+3. Deploy. Vercel runs `npm run vercel-build`, which generates the Prisma client, applies migrations, loads starter content (only into an empty database, never over admin edits) and builds the site.
+4. Connect your domain, update `NEXT_PUBLIC_SITE_URL` to it and redeploy so SEO tags and reset emails use the final address.
 
-```bash
-git remote add origin https://github.com/<you>/fasana-cafe.git
-git push -u origin main
-```
+After that, every push to `main` deploys automatically and every pull request gets a preview link.
 
-Every push runs `.github/workflows/ci.yml`: it boots Postgres, applies migrations, seeds, type-checks, and builds — a broken change shows a red ❌ before it can reach production.
+### Continuous integration
 
-**2. Deploy on Vercel**
-
-1. Import the repo at vercel.com → **Add New → Project**.
-2. Add every variable from `.env.example` (use the **production** `DATABASE_URL`, a real `AUTH_SECRET`, your live `NEXT_PUBLIC_SITE_URL`, and Resend keys if you want email).
-3. Deploy. Vercel runs `npm run vercel-build` = generate → `migrate deploy` → seed (only fills an **empty** database; it never overwrites your admin edits) → `next build`.
-4. Point your domain at the project, update `NEXT_PUBLIC_SITE_URL`, and redeploy so SEO and reset emails use the final URL.
-
-From then on, `git push` to `main` redeploys automatically and pull requests get preview URLs.
+Every push and pull request runs `.github/workflows/ci.yml`. It starts a PostgreSQL 16 database, applies migrations, loads the seed data, type-checks and builds. A broken change fails CI before it reaches production.
 
 ### Other hosts
 
-Any Node.js host works: build with `npm run build`, run migrations with `npm run db:migrate`, serve with `npm run start`.
+Any Node.js 20+ host works:
+
+```bash
+npm ci
+npm run db:migrate
+npm run build
+npm run start
+```
 
 ---
 
 ## Changing the database schema
 
 1. Edit `prisma/schema.prisma`.
-2. `npx prisma migrate dev --name describe-the-change` (creates a migration + regenerates the client).
-3. Commit both `prisma/migrations/` and `src/generated/` is gitignored — the client is regenerated on `postinstall`/`build`.
+2. Run `npx prisma migrate dev --name describe-the-change`. This creates a migration and regenerates the client.
+3. Commit the new folder in `prisma/migrations/`. The generated client in `src/generated/` is gitignored and is rebuilt on install and build.
 
 ---
 
-## Content notes
+## Content and photo credits
 
 - Business details come from the café's public Google listing.
-- Menu prices come from their Foodpanda page (Nov 2026) and may differ in-store; items without a published price show "Ask staff".
-- The About text is a **placeholder draft** — replace it in Admin → Settings with the owner's own words.
-- Starter photos are free stock from Unsplash (Unsplash License): coffee by nik radzi, books by Miriana Dorobanțu, book and coffee by Esra Afşar, café interior by Haberdoedas, pasta by Eaters Collective, café shelf by Sam Grozyan. They're mood shots, not Fasana — replace them with the café's own photos (with permission) in Admin → Settings.
+- Menu prices come from the café's Foodpanda page (November 2026) and may differ in the café. Items without a published price show "Ask staff".
+- The About text is a draft. Replace it in **Admin > Settings** with the owners' own words.
+- Starter photos are free stock images from [Unsplash](https://unsplash.com/license), credited in `src/lib/photos.ts` and `src/lib/dish-photos.ts`. They are not photos of Fasana. Replace them with the café's own photos, with permission, in **Admin > Settings** and **Admin > Menu**.
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---|---|
-| `Cannot resolve environment variable: DATABASE_URL` on `prisma generate` | Create `.env` from `.env.example` first |
-| Sign-up works but reset emails never arrive | Set `RESEND_API_KEY` + `NOTIFY_EMAIL_TO`, or `LOG_RESET_LINKS=1` in dev to print links to the console |
-| Admin says wrong password | Check `ADMIN_EMAIL`/`ADMIN_PASSWORD` in `.env`; they must match exactly |
-| Pages show stale content after admin edits | Hard-refresh; ISR revalidates on save, but the browser may cache |
-| `prisma migrate deploy` fails in CI/Vercel | Check `DATABASE_URL` points at a Postgres the host can reach (use the direct `db.prisma.io` URL, not the pooled `pgbouncer` one) |
+| Problem | Fix |
+| --- | --- |
+| `npm run setup` or `npm run dev` cannot reach the database | Check `DATABASE_URL` in `.env.local`. For Prisma Postgres, use the direct `postgres://...@db.prisma.io:5432/...` URL, not `prisma+postgres://`. |
+| Admin login says the password is wrong | `ADMIN_EMAIL` and `ADMIN_PASSWORD` must match `.env.local` exactly. Restart `npm run dev` after changing them. |
+| Password-reset emails never arrive | Set `RESEND_API_KEY` and `NOTIFY_EMAIL_FROM`. For local testing, set `LOG_RESET_LINKS=1` to print the links in the terminal. |
+| Pages show old content after an admin edit | Refresh with Ctrl+Shift+R. The server updates on save, but your browser may have cached the old page. |
+| `prisma migrate deploy` fails on Vercel or in CI | Make sure `DATABASE_URL` points to a database the host can reach. With Prisma Postgres, use the direct URL. |
 
 ---
 
 ## License
 
-Private project — all rights reserved unless stated otherwise.
+Private project for Fasana Café. All rights reserved.
