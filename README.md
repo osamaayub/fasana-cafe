@@ -18,6 +18,7 @@ One Next.js app runs the public website, table bookings, customer accounts and a
 - [Project structure](#project-structure)
 - [How it works](#how-it-works)
 - [Security](#security)
+- [Google and Facebook sign-in](#google-and-facebook-sign-in)
 - [Deployment](#deployment)
 - [Changing the database schema](#changing-the-database-schema)
 - [Content and photo credits](#content-and-photo-credits)
@@ -40,8 +41,8 @@ One Next.js app runs the public website, table bookings, customer accounts and a
 
 ### Customer accounts
 
-- Sign up, sign in, forgot password and reset password
-- Sign-up signs the customer in and opens a short profile step: phone or WhatsApp, seating preference, dietary notes and an offers opt-in
+- Sign up and sign in with email, Google or Facebook, plus forgot and reset password
+- Sign-up (email or social) signs the customer in and opens a short profile step: phone or WhatsApp, seating preference, dietary notes and an offers opt-in
 - Account page with upcoming and past bookings, self-service cancel, profile editing and password change
 - List of signed-in devices with sign-out per device or everywhere, plus account deletion
 - Saved details fill in the booking form automatically
@@ -122,6 +123,8 @@ Put your values in `.env.local` for local work. This file is gitignored. On Verc
 | `RESEND_API_KEY` | No | Turns on email alerts and password-reset emails. Without it, reset emails are not sent. |
 | `NOTIFY_EMAIL_TO` | No | Where staff alerts are sent |
 | `NOTIFY_EMAIL_FROM` | No | Sender address for Resend. In production it must use a domain verified in Resend. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Turns on "Continue with Google". See [Google and Facebook sign-in](#google-and-facebook-sign-in). |
+| `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` | No | Turns on "Continue with Facebook" (Facebook calls these App ID and App Secret). |
 | `LOG_RESET_LINKS` | Local only | Set to `1` to print password-reset links in the server log when no email provider is set up |
 
 ---
@@ -157,12 +160,13 @@ src/
 │   │   ├── login/
 │   │   └── (panel)/            Dashboard, reservations, messages, menu, settings
 │   ├── api/me/route.ts         Signed-in user's details for the booking form
+│   ├── api/auth/[provider]/    Google and Facebook sign-in (start and callback)
 │   ├── fonts/                  Self-hosted fonts
 │   ├── layout.tsx  globals.css Root layout, fonts and theme
 │   └── sitemap.ts  robots.ts  not-found.tsx
 ├── actions/                    Server Actions: public.ts, account.ts, admin.ts
 ├── components/                 Shared UI (import as @ui/*)
-├── lib/                        Data access, auth, sessions, validation, email (import as @lib/*)
+├── lib/                        Data access, auth, sessions, OAuth, maps links, validation, email (import as @lib/*)
 └── proxy.ts                    Protects /account and /admin routes
 prisma/
 ├── schema.prisma               Data model
@@ -174,7 +178,7 @@ prisma/
 ### Data model
 
 - **Content:** `Settings` (one row with business details, texts and images), `OpeningHour`, `Category`, `MenuItem`, `Highlight`
-- **Customers:** `User` (login and profile), `Session` (hashed tokens), `PasswordResetToken` (hashed, single use)
+- **Customers:** `User` (login and profile), `OAuthAccount` (linked Google or Facebook logins), `Session` (hashed tokens), `PasswordResetToken` (hashed, single use)
 - **Bookings and inbox:** `Reservation`, `Message`
 
 ---
@@ -208,12 +212,43 @@ The booking form offers today, tomorrow or a chosen date, 30-minute slots with a
 - **Rate limits** per IP on sign-in, sign-up, password reset, booking, contact and admin login
 - **Password rules:** at least 10 characters, with letters plus a number or symbol, and common passwords blocked
 - **Reset links** are single use, expire after 1 hour, are stored hashed, and sign out all devices when used
+- **Social sign-in:** OAuth state check (plus PKCE for Google), and a Google or Facebook login is linked to an existing account only when the provider confirms the email is verified
 - **Safe redirects:** the `?next=` parameter only allows paths on this site
 - **CSRF:** Next.js Server Actions check the request's Origin header
 - **Security headers:** HSTS (production), `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `Cross-Origin-Opener-Policy`
 - **Input validation** with zod in `src/lib/validation.ts` and `src/lib/account-validation.ts`
 
 > **Note:** rate limits are kept in memory, so each server instance counts on its own. That is fine for a small site. For strict limits across many Vercel instances, move them to Redis (for example Upstash).
+
+---
+
+## Google and Facebook sign-in
+
+The "Continue with Google" and "Continue with Facebook" buttons appear only after you add that provider's keys. Without keys, the sign-in page shows the email form only, so visitors never see a button that does not work.
+
+How accounts work:
+
+- A new person gets an account with no password. They can add one later from **Account > Security > Set a password**.
+- If someone signs in with Google or Facebook using the same verified email as an existing account, the two are linked, so they keep their bookings.
+- New social accounts go to the short profile step (phone and seating) before booking.
+
+### Google
+
+1. Open [Google Cloud Console](https://console.cloud.google.com) and create or pick a project.
+2. Go to **APIs & Services > OAuth consent screen**. Choose **External**, add the app name "Fasana Café", a support email and your domain, then publish the app.
+3. Go to **APIs & Services > Credentials > Create credentials > OAuth client ID**. Choose **Web application**.
+4. Under **Authorized redirect URIs**, add `https://YOUR-DOMAIN/api/auth/google/callback` (and `http://localhost:3000/api/auth/google/callback` for local testing).
+5. Copy the client ID and secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+### Facebook
+
+1. Open [Meta for Developers](https://developers.facebook.com/apps) and create an app. Choose the use case **Authenticate and request data from users with Facebook Login**.
+2. In the use case settings, make sure the **email** permission is added.
+3. Under **Facebook Login > Settings**, add `https://YOUR-DOMAIN/api/auth/facebook/callback` to **Valid OAuth Redirect URIs**.
+4. In **App settings > Basic**, add a privacy policy URL, then copy the **App ID** and **App Secret** into `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET`.
+5. Switch the app from **Development** to **Live** so everyone can use it, not just app testers.
+
+The redirect address is built from `NEXT_PUBLIC_SITE_URL`, so it must match the address you registered exactly. After adding keys on Vercel, redeploy.
 
 ---
 
