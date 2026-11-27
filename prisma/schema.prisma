@@ -31,6 +31,7 @@ model Settings {
   storyImage    String   @default("")
   reserveImage  String   @default("")
   galleryImages String   @default("") // one image URL per line
+  menuVersion   String   @default("") // which built-in menu the seed last loaded
   updatedAt     DateTime @updatedAt
 }
 
@@ -56,6 +57,7 @@ model MenuItem {
   description String   @default("")
   price       Int? // PKR; null = "Ask staff"
   imageUrl    String   @default("")
+  options     String   @default("") // sizes or proteins, e.g. "Chicken 2030 | Beef 2475"
   featured    Boolean  @default(false)
   available   Boolean  @default(true)
   sortOrder   Int      @default(0)
