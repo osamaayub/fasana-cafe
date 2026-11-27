@@ -6,6 +6,7 @@ node_modules
 
 
 next-env.d.ts
+tsconfig.tsbuildinfo
 *.db
 *.db-journal
 src/generated
