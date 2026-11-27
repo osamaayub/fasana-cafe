@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/about", 0.7],
     ["/faq", 0.5],
     ["/contact", 0.7],
+    ["/privacy", 0.2],
   ];
   return pages.map(([p, priority]) => ({
     url: `${siteUrl}${p}`,
