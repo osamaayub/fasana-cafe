@@ -47,7 +47,7 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const generic: FormState = { ok: false, message: "That email and password don't match. Check them, or reset your password.", values };
   const { email, password } = parsed.data;
   const user = await prisma.user.findUnique({ where: { email } });
-  // No account, or one created with Google/Facebook that has no password yet.
+  // No account, or one created with Google/GitHub that has no password yet.
   if (!user || !user.passwordHash) {
     await burnTime(password);
     return generic;
@@ -168,7 +168,7 @@ export async function deleteAccount(_: FormState, fd: FormData): Promise<FormSta
   if (String(fd.get("confirmEmail") ?? "").trim().toLowerCase() !== user.email) {
     return { ok: false, errors: { confirmEmail: "Type your email exactly to confirm" } };
   }
-  // Accounts made with Google/Facebook have no password; the signed-in session plus the typed email confirm it.
+  // Accounts made with Google/GitHub have no password; the signed-in session plus the typed email confirm it.
   if (user.passwordHash && !(await verifyPassword(String(fd.get("password") ?? ""), user.passwordHash))) {
     return { ok: false, errors: { password: "That's not your password" } };
   }
