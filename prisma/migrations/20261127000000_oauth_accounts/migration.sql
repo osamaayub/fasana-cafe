@@ -1,4 +1,4 @@
--- Accounts created with Google or Facebook have no password
+-- Accounts created with Google or GitHub have no password
 ALTER TABLE "User" ALTER COLUMN "passwordHash" SET DEFAULT '';
 
 -- CreateTable
