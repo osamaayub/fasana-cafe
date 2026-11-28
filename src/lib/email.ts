@@ -26,6 +26,15 @@ export function emailConfigured() {
 
 const fromAddress = () => process.env.NOTIFY_EMAIL_FROM || (process.env.SMTP_USER ? `Fasana Café <${process.env.SMTP_USER}>` : "Fasana Café <onboarding@resend.dev>");
 
+/**
+ * Pasted secrets often pick up quotes, spaces or a trailing newline. Gmail app passwords are shown
+ * as "abcd efgh ijkl mnop" but the real password has no spaces, so strip all whitespace for Gmail.
+ */
+function smtpPassword() {
+  const raw = (process.env.SMTP_PASS ?? "").trim().replace(/^["']|["']$/g, "");
+  return /gmail\.com$/i.test(process.env.SMTP_HOST ?? "") ? raw.replace(/\s+/g, "") : raw;
+}
+
 /** Sends one email. Returns true when the provider accepted it. Never throws. */
 export async function sendEmail(mail: Mail): Promise<boolean> {
   if (!mail.to) return false;
@@ -37,7 +46,7 @@ export async function sendEmail(mail: Mail): Promise<boolean> {
         host: process.env.SMTP_HOST,
         port,
         secure: port === 465,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        auth: { user: process.env.SMTP_USER.trim(), pass: smtpPassword() },
       });
       await transport.sendMail({ from: fromAddress(), to: mail.to, subject: mail.subject, html: mail.html, text: mail.text, replyTo: mail.replyTo });
       return true;
