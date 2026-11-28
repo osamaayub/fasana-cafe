@@ -3,12 +3,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { prisma } from "@lib/prisma";
 import { checkCredentials, requireAdmin } from "@lib/auth";
 import { SESSION_COOKIE, cookieOptions, createToken } from "@lib/session";
 import { rateLimit } from "@lib/rate-limit";
 import { slugify } from "@lib/format";
+import { bookingCancelledEmail, bookingConfirmedEmail, sendEmail } from "@lib/email";
 
 const refreshSite = () => revalidatePath("/", "layout");
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
@@ -99,7 +101,16 @@ export async function deleteCategory(fd: FormData) {
 export async function setReservationStatus(fd: FormData) {
   await requireAdmin();
   const status = z.enum(["pending", "confirmed", "cancelled"]).parse(fd.get("status"));
-  await prisma.reservation.update({ where: { id: Number(fd.get("id")) }, data: { status } });
+  const id = Number(fd.get("id"));
+  const before = await prisma.reservation.findUnique({ where: { id } });
+  const booking = await prisma.reservation.update({ where: { id }, data: { status } });
+  // tell the guest only when the status really changes, and only for upcoming bookings
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
+  if (booking.email && before?.status !== status && booking.date >= today && status !== "pending") {
+    after(async () => {
+      await sendEmail(status === "confirmed" ? await bookingConfirmedEmail(booking) : await bookingCancelledEmail(booking, "cafe"));
+    });
+  }
   revalidatePath("/admin", "layout");
 }
 

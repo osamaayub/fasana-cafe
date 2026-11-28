@@ -2,7 +2,8 @@
 
 import { prisma } from "@lib/prisma";
 import { getCurrentUser } from "@lib/user-session";
-import { notify } from "@lib/notify";
+import { after } from "next/server";
+import { bookingReceivedEmail, messageReceivedEmail, newsletterWelcomeEmail, sendEmail, staffAlertEmail } from "@lib/email";
 import { rateLimit } from "@lib/rate-limit";
 import { fieldErrors, messageSchema, reservationSchema, type FormState } from "@lib/validation";
 
@@ -21,11 +22,18 @@ export async function submitReservation(_: FormState, fd: FormData): Promise<For
   // signed-in guests: carry their saved dietary needs onto every booking for the kitchen
   const diet = user?.dietaryNotes?.trim();
   const notes = diet && !r.notes.toLowerCase().includes(diet.toLowerCase()) ? [r.notes, `Dietary: ${diet}`].filter(Boolean).join(" | ") : r.notes;
-  await prisma.reservation.create({ data: { ...r, notes, userId: user?.id ?? null } });
-  await notify(`New reservation: ${r.name}, ${r.guests} guests`, {
-    Name: r.name, Phone: r.phone, Email: r.email || "-", Date: r.date, Time: r.time, Guests: r.guests, Seating: r.seating, Notes: notes || "-",
+  const email = r.email || user?.email || "";
+  const booking = await prisma.reservation.create({ data: { ...r, email, notes, userId: user?.id ?? null } });
+  // emails go out after the response is sent, so a slow or failing provider never delays or breaks the form
+  after(async () => {
+    await Promise.all([
+      email && sendEmail(await bookingReceivedEmail({ ...booking, notes })),
+      sendEmail(await staffAlertEmail(`New reservation: ${r.name}, ${r.guests} guests`, {
+        Name: r.name, Phone: r.phone, Email: email || "-", Date: r.date, Time: r.time, Guests: r.guests, Seating: r.seating, Notes: notes || "-",
+      })),
+    ]);
   });
-  return { ok: true, message: `Thanks ${r.name.split(" ")[0]}! We've received your request for ${r.guests} on ${r.date} at ${r.time}. We'll call or message ${r.phone} to confirm.${user ? " You can see it under My account." : ""}` };
+  return { ok: true, message: `Thanks ${r.name.split(" ")[0]}! We've received your request for ${r.guests} on ${r.date} at ${r.time}. We'll call or message ${r.phone} to confirm.${email ? ` A copy is on its way to ${email}.` : ""}${user ? " You can see it under My account." : ""}` };
 }
 
 export async function submitMessage(_: FormState, fd: FormData): Promise<FormState> {
@@ -38,7 +46,12 @@ export async function submitMessage(_: FormState, fd: FormData): Promise<FormSta
   if (!(await rateLimit("contact"))) return { ok: false, message: "Too many messages. Please try again later.", values };
   const m = parsed.data;
   await prisma.message.create({ data: m });
-  await notify(`New message from ${m.name}`, { Name: m.name, Phone: m.phone || "-", Email: m.email || "-", Subject: m.subject || "-", Message: m.body });
+  after(async () => {
+    await Promise.all([
+      m.email && sendEmail(await messageReceivedEmail({ ...m, email: m.email })),
+      sendEmail(await staffAlertEmail(`New message from ${m.name}`, { Name: m.name, Phone: m.phone || "-", Email: m.email || "-", Subject: m.subject || "-", Message: m.body })),
+    ]);
+  });
   return { ok: true, message: "Thanks for your message. We'll get back to you soon." };
 }
 
@@ -47,6 +60,11 @@ export async function subscribeNewsletter(_: FormState, fd: FormData): Promise<F
   const email = String(fd.get("email") ?? "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, message: "Please enter a valid email address." };
   if (!(await rateLimit("contact"))) return { ok: false, message: "Too many requests. Please try again later." };
-  await prisma.message.create({ data: { name: "Newsletter subscriber", email, subject: "Newsletter signup", body: "Subscribed from the homepage." } });
-  return { ok: true, message: "You're on the list — see you soon." };
+  // one welcome email per address: repeat signups are accepted quietly
+  const already = await prisma.message.findFirst({ where: { email, subject: "Newsletter signup" }, select: { id: true } });
+  if (!already) {
+    await prisma.message.create({ data: { name: "Newsletter subscriber", email, subject: "Newsletter signup", body: "Subscribed from the homepage." } });
+    after(async () => void (await sendEmail(await newsletterWelcomeEmail(email))));
+  }
+  return { ok: true, message: "You're on the list. Check your inbox for a welcome email." };
 }

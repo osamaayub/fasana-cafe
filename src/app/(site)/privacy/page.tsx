@@ -76,7 +76,7 @@ export default async function PrivacyPage() {
           <ul>
             <li><strong>Vercel</strong> hosts the website.</li>
             <li><strong>Prisma Postgres</strong> stores the database.</li>
-            <li><strong>Resend</strong> sends booking alerts and password-reset emails.</li>
+            <li>Our <strong>email provider</strong> sends booking confirmations, replies to messages, newsletter emails and password resets. We only email the address you give us.</li>
             <li><strong>Google</strong> and <strong>GitHub</strong> confirm who you are, only if you choose to sign in with them.</li>
           </ul>
         </>

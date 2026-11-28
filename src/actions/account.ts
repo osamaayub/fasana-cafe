@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@lib/prisma";
 import { rateLimit } from "@lib/rate-limit";
 import { notifyTo } from "@lib/notify";
+import { bookingCancelledEmail, sendEmail } from "@lib/email";
 import { siteUrl } from "@lib/site";
 import { burnTime, hashPassword, verifyPassword } from "@lib/password";
 import {
@@ -153,10 +155,16 @@ export async function cancelMyReservation(fd: FormData) {
   const user = await requireUser({ allowIncomplete: true });
   // only the owner can cancel, and only upcoming bookings
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
-  await prisma.reservation.updateMany({
-    where: { id: Number(fd.get("id")), userId: user.id, date: { gte: today }, status: { not: "cancelled" } },
+  const id = Number(fd.get("id"));
+  const { count } = await prisma.reservation.updateMany({
+    where: { id, userId: user.id, date: { gte: today }, status: { not: "cancelled" } },
     data: { status: "cancelled" },
   });
+  if (count) {
+    const booking = await prisma.reservation.findUnique({ where: { id } });
+    const to = booking?.email || user.email;
+    if (booking && to) after(async () => void (await sendEmail(await bookingCancelledEmail({ ...booking, email: to }, "guest"))));
+  }
   revalidatePath("/account");
   revalidatePath("/admin", "layout");
 }
