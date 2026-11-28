@@ -3,7 +3,7 @@
 import { prisma } from "@lib/prisma";
 import { getCurrentUser } from "@lib/user-session";
 import { after } from "next/server";
-import { bookingReceivedEmail, messageReceivedEmail, newsletterWelcomeEmail, sendEmail, staffAlertEmail } from "@lib/email";
+import { bookingReceivedEmail, emailConfigured, messageReceivedEmail, newsletterWelcomeEmail, sendEmail, staffAlertEmail } from "@lib/email";
 import { rateLimit } from "@lib/rate-limit";
 import { fieldErrors, messageSchema, reservationSchema, type FormState } from "@lib/validation";
 
@@ -33,7 +33,7 @@ export async function submitReservation(_: FormState, fd: FormData): Promise<For
       })),
     ]);
   });
-  return { ok: true, message: `Thanks ${r.name.split(" ")[0]}! We've received your request for ${r.guests} on ${r.date} at ${r.time}. We'll call or message ${r.phone} to confirm.${email ? ` A copy is on its way to ${email}.` : ""}${user ? " You can see it under My account." : ""}` };
+  return { ok: true, message: `Thanks ${r.name.split(" ")[0]}! We've received your request for ${r.guests} on ${r.date} at ${r.time}. We'll call or message ${r.phone} to confirm.${email && emailConfigured() ? ` A copy is on its way to ${email}.` : ""}${user ? " You can see it under My account." : ""}` };
 }
 
 export async function submitMessage(_: FormState, fd: FormData): Promise<FormState> {
@@ -66,5 +66,5 @@ export async function subscribeNewsletter(_: FormState, fd: FormData): Promise<F
     await prisma.message.create({ data: { name: "Newsletter subscriber", email, subject: "Newsletter signup", body: "Subscribed from the homepage." } });
     after(async () => void (await sendEmail(await newsletterWelcomeEmail(email))));
   }
-  return { ok: true, message: "You're on the list. Check your inbox for a welcome email." };
+  return { ok: true, message: emailConfigured() ? "You're on the list. Check your inbox for a welcome email." : "You're on the list. See you soon." };
 }

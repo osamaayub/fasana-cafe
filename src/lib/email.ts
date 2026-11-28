@@ -51,6 +51,7 @@ export async function sendEmail(mail: Mail): Promise<boolean> {
       if (!res.ok) console.error("email: resend rejected", res.status, await res.text().catch(() => ""));
       return res.ok;
     }
+    console.warn("email: not sent, no transport configured (set SMTP_HOST, SMTP_USER, SMTP_PASS or RESEND_API_KEY)");
   } catch (e) {
     console.error("email: send failed", e);
   }
