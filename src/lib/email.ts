@@ -62,7 +62,8 @@ export async function sendEmail(mail: Mail): Promise<boolean> {
     }
     console.warn("email: not sent, no transport configured (set SMTP_HOST, SMTP_USER, SMTP_PASS or RESEND_API_KEY)");
   } catch (e) {
-    console.error("email: send failed", e);
+    // never log the password itself; its length is enough to spot a wrong paste (Gmail app passwords are 16)
+    console.error("email: send failed", { host: process.env.SMTP_HOST, user: process.env.SMTP_USER, passLength: smtpPassword().length }, e);
   }
   return false;
 }
